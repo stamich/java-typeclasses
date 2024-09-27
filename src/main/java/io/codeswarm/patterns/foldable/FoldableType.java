@@ -50,6 +50,6 @@ public class FoldableType<T,U> implements Foldable<T,U> {
     public U foldRight(List<T> list, U initialValue, BiFunction<T, U, U> accumulator) {
         return list.isEmpty()
                 ? initialValue
-                : accumulator.apply(head(list), foldRight(tail(list), initialValue, accumulator));
+                : accumulator.apply(head(list), foldRight(Objects.requireNonNull(tail(list)), initialValue, accumulator));
     }
 }
