@@ -3,7 +3,7 @@ package io.codeswarm.typeclasses.examples;
 import java.util.Objects;
 
 /**
- * Example immutable domain value used to demonstrate that a model does not
+ * Immutable example domain value used to demonstrate that a model does not
  * need to implement its typeclasses.
  *
  * @param name the person's non-null name
