@@ -68,4 +68,23 @@ The important idea is that the project does not need to modify `Option` to give 
 
 The same pattern is used for `Either<L,R>` and `Validated<E,A>`.
 
-This is a stepping stone toward higher-kinded abstractions, but it remains ordinary Java generics in milestone 0.4.
+This is a stepping stone toward higher-kinded abstractions, but it remains ordinary Java generics throughout the 0.4.x milestones.
+
+## NonEmptyList instances in milestone 0.4.1
+
+`NonEmptyList<A>` demonstrates how the shape of a data type constrains the lawful algebra that can be provided for it.
+
+Given `Eq<A>` and `Show<A>`, the project derives:
+
+```text
+Eq<NonEmptyList<A>>
+Show<NonEmptyList<A>>
+```
+
+Independently, non-empty-list concatenation provides:
+
+```text
+Semigroup<NonEmptyList<A>>
+```
+
+There is intentionally no `Monoid<NonEmptyList<A>>`, because no lawful empty identity can inhabit the type.

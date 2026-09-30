@@ -2,6 +2,47 @@
 
 All notable changes to this educational project are documented here.
 
+## 0.4.1
+
+### Added
+
+- immutable `NonEmptyList<A>` with `map`, `concat`, `toList` and size operations,
+- derived `Eq<NonEmptyList<A>>` and `Show<NonEmptyList<A>>`,
+- concatenation `Semigroup<NonEmptyList<A>>`,
+- jqwik law checks for non-empty-list equality and associativity,
+- `Option.when`,
+- `Either.cond`, `Either.fromNullable` and `Either.fromOptional`,
+- sealed typed `ValidationError` hierarchy,
+- invariant-safe `UserId`, `PersonName` and `Age` smart constructors,
+- validated `User` domain record,
+- domain-level `UserValidator` accumulating errors into `Validated`,
+- `SmartConstructorExample` and `ValidatedUserExample`,
+- `docs/SMART_CONSTRUCTORS.md`.
+
+### Changed
+
+- project version updated from `0.4.0` to `0.4.1`,
+- `Invalid<E,A>` now stores `NonEmptyList<E>` instead of `List<E>`,
+- `Validated.invalid` now requires at least one error structurally,
+- `Validated.fold` exposes `NonEmptyList<E>` on the invalid branch,
+- `ValidatedInstances` updated for the stronger error representation,
+- README, ADT, architecture, roadmap and implementation tasks updated.
+
+### Removed / intentionally omitted
+
+- removed the runtime empty-list validation from `Invalid`; the type now guarantees non-emptiness,
+- no `Monoid<NonEmptyList<A>>` is provided because no lawful empty identity exists,
+- no `flatMap`, HKT encoding, generic `Applicative` validation, effects or Tagless Final code is introduced yet,
+- no obsolete scripts or generated build outputs are retained.
+
+### Design notes
+
+- public smart constructors model expected failures with ADTs instead of exceptions,
+- invalid domain states cannot be created through the public APIs of `UserId`, `PersonName` and `Age`,
+- typed validation errors replace stringly-typed domain errors,
+- explicit domain-level validation accumulation is temporary and intentionally precedes the generic Applicative solution,
+- the milestone continues to follow SOLID, KISS, DRY and YAGNI.
+
 ## 0.4.0
 
 ### Added

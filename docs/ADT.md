@@ -1,102 +1,50 @@
-# Algebraic Data Types
+# Algebraic data types
 
-Milestone 0.4 introduces three sealed algebraic data types implemented with Java 21 sealed interfaces and records.
+Milestone 0.4 introduced Java 21 sealed ADTs. Milestone 0.4.1 strengthens them with `NonEmptyList` and domain invariants.
 
-## Why ADTs?
+## Sum types
 
-ADTs make the possible states of a value explicit in the type system. They avoid using `null`, magic sentinel values or exceptions for ordinary branching.
-
-The milestone deliberately keeps each ADT small. Generic higher-kinded abstractions are deferred until later milestones.
-
-## Option<A>
-
-`Option<A>` represents an optional value:
+`Option`, `Either` and `Validated` are modeled as sealed sum types:
 
 ```text
-Option<A> = Some<A> | None<A>
+Option<A>              Either<L,R>            Validated<E,A>
+├── Some<A>            ├── Left<L,R>          ├── Valid<E,A>
+└── None<A>            └── Right<L,R>         └── Invalid<E,A>
 ```
 
-Supported operations:
+## Product types
 
-- `map`,
-- `fold`,
-- `isDefined`,
-- `isEmpty`,
-- `getOrElse`,
-- factories `some`, `none`, `fromNullable`.
+Records are used where all components can safely be exposed through canonical construction, for example `User` and `NonEmptyList`.
 
-`Some` rejects `null`. `None` carries no value.
+## Non-empty structures
 
-## Either<L,R>
-
-`Either<L,R>` represents one of two possible values:
+`NonEmptyList<A>` stores a mandatory `head` and an immutable `tail`.
 
 ```text
-Either<L,R> = Left<L,R> | Right<L,R>
+NonEmptyList<A>
+  head: A
+  tail: List<A>
 ```
 
-By convention the right branch represents the successful path, so `map` is right-biased. `mapLeft` explicitly transforms the left branch.
+This structurally rules out the empty state.
 
-Supported operations:
+`Invalid<E,A>` therefore stores `NonEmptyList<E>` rather than `List<E>`.
 
-- `map`,
-- `mapLeft`,
-- `fold`,
-- `isLeft`,
-- `isRight`,
-- factories `left` and `right`.
+## Minimal operations
 
-`flatMap` is intentionally absent. It will become more meaningful when the project introduces `Monad` and can explain the relationship between a concrete method and the generic typeclass.
+The project intentionally keeps concrete ADT operations small:
 
-## Validated<E,A>
+- `Option`: `map`, `fold`, `getOrElse`, branch checks,
+- `Either`: `map`, `mapLeft`, `fold`, branch checks,
+- `Validated`: `map`, `fold`, branch checks,
+- `NonEmptyList`: `map`, `concat`, `toList`.
 
-`Validated<E,A>` represents successful validation or one or more validation errors:
+`flatMap`, generic `traverse`, Applicative composition and effectful operations are deferred until their corresponding abstractions exist.
 
-```text
-Validated<E,A> = Valid<E,A> | Invalid<E,A>
-```
+## Smart constructors and invariants
 
-`Invalid` requires a non-empty list and defensively copies it.
+ADT results are also used to create domain values safely. See [SMART_CONSTRUCTORS.md](SMART_CONSTRUCTORS.md).
 
-Supported operations:
+## Algebraic connection
 
-- `map`,
-- `fold`,
-- `isValid`,
-- `isInvalid`,
-- factories `valid` and `invalid`.
-
-Although `Invalid` can store multiple errors, 0.4 does not yet implement generic error accumulation between independent validations. That behavior naturally belongs to an Applicative abstraction planned for milestone 0.6.
-
-## Compositional typeclass instances
-
-The `instances` package contains factories that derive instances for an ADT from instances for its components.
-
-Examples:
-
-```text
-Eq<A>                      -> Eq<Option<A>>
-Show<A>                    -> Show<Option<A>>
-Eq<L> + Eq<R>              -> Eq<Either<L,R>>
-Show<L> + Show<R>          -> Show<Either<L,R>>
-Eq<E> + Eq<A>              -> Eq<Validated<E,A>>
-Show<E> + Show<A>          -> Show<Validated<E,A>>
-```
-
-This is the first project milestone where typeclass instances are explicitly composed from other instances.
-
-## Why no Tagless Final in 0.4?
-
-ADTs solve a different problem from Tagless Final. ADTs model data and branching. Tagless Final abstracts programs over effect capabilities.
-
-Java cannot directly express Scala's `F[_]`. Introducing a pseudo-Tagless-Final API before an HKT encoding would either hard-code result types or hide the central idea.
-
-The planned progression is therefore:
-
-```text
-ADTs
-  -> Kind<F,A>
-  -> Functor / Applicative / Monad
-  -> effect types
-  -> Tagless Final
-```
+`NonEmptyList` has a lawful concatenation `Semigroup` but no lawful empty identity. An ordinary `List` can have a concatenation `Monoid` because `List.of()` is an identity element.

@@ -6,149 +6,116 @@ Early exploration of typeclass-like patterns in Java.
 
 ## 0.1.1 — Foundation hardening
 
-- Java 21 baseline,
-- explicit `Show<A>`,
-- dictionary passing,
-- separated instances,
-- CI and documentation cleanup.
+Java 21 baseline, explicit `Show<A>`, dictionary passing, separated instances and documentation cleanup.
 
 ## 0.2 — Basic algebraic typeclasses
 
-- `Eq<A>`,
-- `Ord<A>`,
-- `Semigroup<A>`,
-- `Monoid<A>`,
-- standard instances,
-- dedicated syntax helpers.
+`Eq`, `Ord`, `Semigroup`, `Monoid`, standard instances and syntax helpers.
 
 ## 0.3 — Typeclass laws
 
-- executable `Eq`, `Ord`, `Semigroup` and `Monoid` laws,
-- jqwik property-based testing,
-- lawful and intentionally unlawful examples.
+Executable laws, jqwik property testing and lawful/unlawful examples.
 
-## 0.4 — Algebraic data types and compositional instances
+## 0.4 — Algebraic data types
+
+`Option`, `Either`, `Validated`, composed `Eq` / `Show` instances and ADT property tests.
+
+## 0.4.1 — ADT hardening and smart constructors
 
 **Current milestone.**
 
-- `Option<A>` / `Some<A>` / `None<A>`,
-- `Either<L,R>` / `Left<L,R>` / `Right<L,R>`,
-- `Validated<E,A>` / `Valid<E,A>` / `Invalid<E,A>`,
-- `Eq` and `Show` instance composition,
-- property tests for derived equality instances,
-- ADT documentation.
+- `NonEmptyList<A>`,
+- `Invalid<E,A>` backed by `NonEmptyList<E>`,
+- `Semigroup<NonEmptyList<A>>`,
+- smart constructors,
+- typed validation errors,
+- invariant-safe domain values,
+- Java interoperability helpers for `Option` / `Either`,
+- domain-level accumulated validation.
 
 ## 0.5 — Higher-kinded type encoding
 
-Introduce an explicit encoding for Java's missing higher-kinded types:
+- `Kind<F,A>`,
+- witness types (`OptionK`, `EitherK`, `ValidatedK`),
+- isolated narrowing/widening helpers,
+- adapters from existing concrete ADTs,
+- documentation of Java type-erasure limitations.
 
-```text
-Kind<F,A>
-```
+## 0.6 — Functor / Applicative / Monad
 
-Planned work:
+- `Functor<F>`,
+- `Applicative<F>`,
+- `Monad<F>`,
+- `MonadError<F,E>` where justified,
+- instances for `Option` and right-biased `Either`,
+- Applicative validation accumulation for `Validated`,
+- Functor / Applicative / Monad laws.
 
-- `Kind<F,A>` marker/encoding,
-- witness types such as `OptionK`, `EitherK`,
-- safe narrowing helpers isolated in one place,
-- discussion of Java type erasure and limitations,
-- laws/tests for the encoding boundary,
-- adapters between existing concrete ADTs and their `Kind` representation.
+## 0.7 — Foldable / Traverse / Bifunctor
 
-The goal is infrastructure, not new behavior.
+- `Foldable<F>`,
+- `Traverse<F>`,
+- `Bifunctor<F>`,
+- `sequence` / `traverse`,
+- examples such as `List<Option<A>> -> Option<List<A>>`,
+- corresponding laws.
 
-## 0.6 — Functor, Applicative and Monad
+## 0.8 — Effects and natural transformations
 
-Build the first higher-kinded typeclass hierarchy:
-
-```text
-Functor<F>
-    ^
-Applicative<F>
-    ^
-Monad<F>
-```
-
-Planned instances:
-
-- `Option`,
-- right-biased `Either`,
-- `Validated` for Applicative error accumulation where appropriate.
-
-Add corresponding laws and property tests.
-
-This milestone should also clarify why `Validated` is naturally Applicative but should not be treated as a fail-fast Monad when accumulating errors.
-
-## 0.7 — Effects and natural transformations
-
-Prepare the execution model needed by Tagless Final.
-
-Planned topics:
-
-- simple `Id<A>`,
-- lazy `Eval<A>`,
-- small educational `IO<A>` effect,
-- `FunctionK<F,G>` / natural transformations,
+- `Id<A>`,
+- `Eval<A>`,
+- educational `IO<A>`,
+- `FunctionK<F,G>`,
 - effect interpreters,
-- stack-safety considerations where relevant,
-- Monad instances and laws for supported effects.
+- stack-safety discussion.
 
-The goal is not to compete with Cats Effect or ZIO; it is to make effect polymorphism understandable in Java.
+## 0.9 — Kleisli and effectful composition
 
-## 0.8 — Tagless Final
+- `Kleisli<F,A,B>`,
+- composition of effectful functions,
+- Reader-style dependency passing where useful,
+- workflow examples.
 
-Introduce Tagless Final only after HKT and effects exist.
+## 0.10 — Tagless Final
 
-Example direction:
-
-```java
-interface UserRepository<F> {
-    Kind<F, User> find(UserId id);
-}
-```
-
-and programs parameterized by an effect constructor:
-
-```text
-algebra/capability interfaces
-          +
-programs parameterized by F
-          +
-multiple interpreters
-```
-
-Planned interpreters may include:
-
-- `Id` for pure deterministic tests,
-- `Either` for explicit errors,
-- `IO` for real side effects.
-
-Topics:
-
-- programs vs interpreters,
-- dependency inversion without framework DI,
-- testing without mocks,
+- algebras/capabilities parameterized by `F`,
+- programs expressed only in terms of algebras and typeclasses,
+- interpreters for `Id`, `Either` and `IO`,
 - natural transformations between interpreters,
-- comparison with Scala 3 / Cats Tagless Final.
+- comparison with Scala/Cats Tagless Final.
 
-## 0.9 — Derivation, resolution and API hardening
+## 0.11 — Free Monad
 
-Experiments that are useful only after the core model is stable:
+- `Free<F,A>`,
+- algebra ASTs,
+- interpreters via natural transformations,
+- explicit comparison: Tagless Final vs Free Monad.
 
-- derived `Eq` / `Show` for records,
-- optional annotation-processing experiment,
-- explicit instance registry / `summon` experiment if it remains educationally useful,
-- naming and package stabilization,
-- compatibility review,
-- publication metadata.
+## 0.12 — Optics
 
-Any implicit-resolution mechanism must remain optional; explicit instances are the conceptual baseline.
+- `Lens<S,A>`,
+- `Prism<S,A>`,
+- optional focus / traversal concepts,
+- composition for immutable nested updates.
+
+## 0.13 — Advanced typeclasses
+
+Candidates include `SemigroupK`, `MonoidK`, `Alternative`, richer error typeclasses and advanced validation composition.
+
+## 0.14 — Derivation and resolution experiments
+
+- generated `Eq` / `Show` for records,
+- optional annotation processing,
+- optional explicit registry / `summon` experiment,
+- API naming and package stabilization.
+
+## 0.15 — Performance and ergonomics
+
+- JMH where meaningful,
+- allocation analysis,
+- API simplification,
+- compatibility review.
 
 ## 1.0 — Stable educational release
 
-- stable public API,
-- complete documentation,
-- Java vs Scala/Cats comparison,
-- examples spanning basic typeclasses through Tagless Final,
-- law-checked standard instances,
-- release/publishing workflow.
+Stable API, complete docs, Java-vs-Scala/Cats comparisons, examples from first-order typeclasses through Tagless Final / Free / optics, and law-checked standard instances.

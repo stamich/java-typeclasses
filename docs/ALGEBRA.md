@@ -44,3 +44,17 @@ Law checking does not hard-code `Object.equals`. The law receives an `Eq<A>` ins
 ## Laws as executable contracts
 
 The interfaces remain tiny. Their semantic contracts are verified in test scope through `SemigroupLaws` and `MonoidLaws` plus jqwik property suites.
+
+## NonEmptyList semigroup (0.4.1)
+
+`NonEmptyList<A>` has a natural associative concatenation operation:
+
+```text
+NonEmptyList(1,2) <> NonEmptyList(3,4)
+=
+NonEmptyList(1,2,3,4)
+```
+
+Therefore it forms a `Semigroup` under concatenation.
+
+It deliberately does **not** form a `Monoid` under the same representation because there is no empty `NonEmptyList` to serve as the identity value. This contrasts with ordinary `List<A>`, whose empty list is the concatenation identity.

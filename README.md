@@ -2,41 +2,37 @@
 
 An educational implementation of typeclass-oriented functional programming in modern Java.
 
-Milestone **0.4.0** extends the algebra and executable laws introduced in earlier releases with algebraic data types (ADTs) and compositional typeclass instances.
+Milestone **0.4.1** hardens the ADT layer introduced in 0.4.0 with non-empty collections, smart constructors, typed validation errors and domain invariants.
 
 ## Goals
 
-The project demonstrates how concepts commonly associated with Scala, Cats and Haskell can be represented explicitly in Java while keeping the implementation small and understandable.
+The project demonstrates how concepts associated with Scala, Cats and Haskell can be represented explicitly in Java while keeping the implementation small and understandable.
 
 The project currently covers:
 
-- explicit typeclass instances,
-- dictionary passing,
-- multiple instances for the same domain type,
+- explicit typeclass instances and dictionary passing,
 - `Eq`, `Ord`, `Show`, `Semigroup` and `Monoid`,
-- executable algebraic laws,
-- property-based testing with jqwik,
-- sealed algebraic data types,
-- composition of typeclass instances.
+- executable algebraic laws and jqwik property tests,
+- sealed ADTs: `Option`, `Either` and `Validated`,
+- compositional `Eq` and `Show` instances,
+- `NonEmptyList<A>`,
+- smart constructors and invariant-safe domain values,
+- typed validation errors,
+- domain-level error accumulation with `Validated`.
 
-The project deliberately does **not** yet introduce higher-kinded type encoding, `Functor`, `Applicative`, `Monad`, effect types or Tagless Final.
+The project deliberately does **not** yet introduce HKT encoding, `Functor`, `Applicative`, `Monad`, `Traverse`, effects, Kleisli, Tagless Final, Free Monad or optics.
 
 ## Requirements
 
 - Java 21 or newer,
-- Gradle 9.8.0 through the project wrapper configuration.
+- Gradle 9.8.0 through the wrapper configuration.
 
-CI is intended to verify the project on Java 21, 25 and 27.
+CI is intended to verify Java 21, 25 and 27.
 
 ## Build
 
 ```bash
 ./gradlew clean check
-```
-
-Generate Javadoc:
-
-```bash
 ./gradlew javadoc
 ```
 
@@ -52,168 +48,135 @@ src/main/java/io/codeswarm/typeclasses/
 │   ├── Ord.java
 │   └── Show.java
 ├── data/
-│   ├── Either.java
-│   ├── Invalid.java
-│   ├── Left.java
-│   ├── None.java
 │   ├── Option.java
-│   ├── Right.java
 │   ├── Some.java
+│   ├── None.java
+│   ├── Either.java
+│   ├── Left.java
+│   ├── Right.java
+│   ├── Validated.java
 │   ├── Valid.java
-│   └── Validated.java
+│   ├── Invalid.java
+│   └── NonEmptyList.java
+├── domain/
+│   ├── ValidationError.java
+│   ├── BlankUserId.java
+│   ├── BlankPersonName.java
+│   ├── PersonNameTooLong.java
+│   ├── InvalidAge.java
+│   ├── UserId.java
+│   ├── PersonName.java
+│   ├── Age.java
+│   ├── User.java
+│   └── UserValidator.java
 ├── examples/
 ├── instances/
 └── syntax/
 ```
 
-Reusable law helpers remain test infrastructure:
+Reusable law helpers remain in `src/test/java/io/codeswarm/typeclasses/laws/`.
+
+## NonEmptyList
+
+`NonEmptyList<A>` encodes non-emptiness structurally:
+
+```java
+NonEmptyList<Integer> values = NonEmptyList.of(1, 2, 3);
+```
+
+There is no public way to create an empty value. This lets `Invalid<E,A>` represent failed validation without a separate runtime `isEmpty()` guard.
+
+```java
+public record Invalid<E, A>(NonEmptyList<E> errors)
+        implements Validated<E, A> {
+}
+```
+
+`NonEmptyList<A>` has a natural concatenation `Semigroup` but intentionally no `Monoid`:
 
 ```text
-src/test/java/io/codeswarm/typeclasses/laws/
+List<A>          -> Monoid<List<A>>
+NonEmptyList<A>  -> Semigroup<NonEmptyList<A>>
 ```
 
-This keeps the production API focused while the project is still pre-1.0.
+A monoid requires an identity element; an empty `NonEmptyList` cannot exist.
 
-## Basic typeclass example
+## Smart constructors
+
+Domain values expose factories that validate raw input and return an ADT instead of throwing for expected validation failures.
 
 ```java
-Eq<Integer> integerEq = IntegerInstances.EQ;
-boolean same = integerEq.eqv(42, 42);
+Either<ValidationError, UserId> id = UserId.from(" user-42 ");
+Either<ValidationError, Age> age = Age.from(42);
 ```
 
-Typeclass behavior remains separate from the represented type. A domain object does not have to implement the typeclass interface.
-
-## Algebraic data types
-
-### Option
-
-`Option<A>` models presence or absence without exposing `null` as part of normal program flow.
+Invalid input is explicit:
 
 ```java
-Option<Integer> result =
-        Option.some(21)
-                .map(value -> value * 2);
+Age.from(-1);       // Left(InvalidAge[-1])
+UserId.from(" ");   // Left(BlankUserId[])
 ```
 
-The ADT is sealed and has two variants:
+The constructors of `UserId`, `PersonName` and `Age` are private, so invalid states cannot be created through their public APIs.
+
+See [docs/SMART_CONSTRUCTORS.md](docs/SMART_CONSTRUCTORS.md).
+
+## Typed validation errors
+
+Expected validation failures are modeled as a closed ADT:
 
 ```text
-Option<A>
-├── Some<A>
-└── None<A>
+ValidationError
+├── BlankUserId
+├── BlankPersonName
+├── PersonNameTooLong
+└── InvalidAge
 ```
 
-### Either
+This is preferable to using arbitrary strings when callers need to inspect or pattern-match on error categories.
 
-`Either<L,R>` models two alternatives and is right-biased for `map`.
+## Validated and error accumulation
+
+`UserValidator` demonstrates accumulation of independent errors:
 
 ```java
-Either<String, Integer> result =
-        Either.<String, Integer>right(21)
-                .map(value -> value * 2);
+Validated<ValidationError, User> result =
+        UserValidator.validate("", "", -10);
 ```
 
-```text
-Either<L,R>
-├── Left<L,R>
-└── Right<L,R>
-```
+The result contains three typed errors in a `NonEmptyList`.
 
-### Validated
+This implementation is intentionally domain-specific. Generic validation composition is deferred until the project has `Applicative`.
 
-`Validated<E,A>` models a successful value or one or more validation errors.
+## ADT helper factories
+
+Milestone 0.4.1 adds small Java-interoperability helpers:
 
 ```java
-Validated<String, Integer> result =
-        Validated.invalid(
-                List.of("name is empty", "age is negative"));
+Option.when(condition, supplier);
+Either.cond(condition, rightSupplier, leftSupplier);
+Either.fromNullable(value, leftSupplier);
+Either.fromOptional(optional, leftSupplier);
 ```
 
-```text
-Validated<E,A>
-├── Valid<E,A>
-└── Invalid<E,A>
-```
-
-Milestone 0.4 stores multiple errors in `Invalid`, but intentionally does not yet define generic Applicative-based error accumulation. That belongs after `Applicative` exists in the typeclass hierarchy.
-
-## Compositional instances
-
-A major addition in 0.4 is the ability to derive a typeclass instance for a structured type from instances for its elements.
-
-For example:
-
-```java
-Eq<Option<Integer>> optionEq =
-        OptionInstances.eq(IntegerInstances.EQ);
-```
-
-Conceptually:
-
-```text
-Eq<A>
-  │
-  ▼
-Eq<Option<A>>
-```
-
-The same idea is implemented for `Either` and `Validated`:
-
-```java
-Eq<Either<String, Integer>> eitherEq =
-        EitherInstances.eq(
-                StringInstances.EQ,
-                IntegerInstances.EQ);
-```
-
-and:
-
-```java
-Show<Validated<String, Integer>> validatedShow =
-        ValidatedInstances.show(
-                StringInstances.SHOW,
-                IntegerInstances.SHOW);
-```
-
-This is an important bridge between simple typeclasses and the higher-kinded abstractions planned for later milestones.
-
-## Algebraic laws
-
-A Java implementation matching an interface is not automatically a lawful instance of the algebraic abstraction it represents.
-
-Milestone 0.3 introduced executable laws for:
-
-- `Eq`,
-- `Ord`,
-- `Semigroup`,
-- `Monoid`.
-
-Milestone 0.4 extends property testing to composed ADT equality instances. For example, if `Eq<Integer>` is lawful, `OptionInstances.eq(IntegerInstances.EQ)` is verified against the `Eq` laws as well.
-
-See [docs/LAWS.md](docs/LAWS.md).
+No `flatMap` is added yet; monadic operations will be introduced together with the generic `Monad` milestone.
 
 ## Design principles
 
-The project applies the following principles deliberately:
+- **SRP** — ADTs, domain validation, typeclasses, instances, syntax and laws remain separate.
+- **OCP** — new instances and domain validators do not require modifying typeclasses.
+- **DIP** — generic functions continue to depend on typeclass abstractions.
+- **KISS** — smart constructors use ordinary Java and explicit ADTs.
+- **DRY** — law helpers and compositional instances are reused rather than duplicated.
+- **YAGNI** — no HKT, generic Applicative validation or effect system is introduced early.
 
-- **SRP** — ADTs, typeclasses, instances, syntax helpers and laws have separate responsibilities.
-- **OCP** — new instances can be added without modifying represented domain types.
-- **DIP** — generic algorithms depend on typeclass interfaces, not concrete policies.
-- **KISS** — each ADT exposes only operations needed by the current milestone.
-- **DRY** — compositional instance logic is centralized in dedicated instance factories.
-- **YAGNI** — no HKT encoding, Monad, effect runtime or Tagless Final is introduced before the required foundations exist.
+## Examples
 
-## Example
+`AdtExample` demonstrates `Option`, `Either`, `Validated` and composed `Show` instances.
 
-Run `AdtExample` from the IDE or compile and execute it manually. It demonstrates `Option`, `Either`, `Validated` and derived `Show` instances.
+`SmartConstructorExample` demonstrates validated domain values.
 
-Expected output:
-
-```text
-Some(42)
-Right(42)
-Invalid([name is empty, age is negative])
-```
+`ValidatedUserExample` demonstrates accumulated typed validation errors.
 
 ## Documentation
 
@@ -222,24 +185,25 @@ Invalid([name is empty, age is negative])
 - [Algebra](docs/ALGEBRA.md)
 - [Algebraic laws](docs/LAWS.md)
 - [Algebraic data types](docs/ADT.md)
+- [Smart constructors](docs/SMART_CONSTRUCTORS.md)
 - [Implementation tasks](docs/IMPLEMENTATION_TASKS.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Changelog](CHANGELOG.md)
 
 ## Roadmap
 
-The planned sequence after 0.4 is:
-
 ```text
-0.5  Higher-kinded type encoding: Kind<F,A>
-0.6  Functor / Applicative / Monad
-0.7  Effect types and natural transformations
-0.8  Tagless Final with an effect parameter F
-0.9  Derivation / instance-resolution experiments and API hardening
-1.0  Stable educational release
+0.5   HKT encoding: Kind<F,A>
+0.6   Functor / Applicative / Monad / MonadError
+0.7   Foldable / Traverse / Bifunctor
+0.8   Id / Eval / IO / FunctionK
+0.9   Kleisli and effectful composition
+0.10  Tagless Final
+0.11  Free Monad
+0.12  Lens / Prism / Optics
+0.13+ advanced typeclasses, derivation and API hardening
+1.0   stable educational release
 ```
-
-Tagless Final is intentionally delayed until the project can express an effect constructor and the typeclasses needed to program over it meaningfully.
 
 ## License
 
