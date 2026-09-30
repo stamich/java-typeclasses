@@ -8,10 +8,9 @@ import io.codeswarm.typeclasses.instances.IntegerInstances;
 import io.codeswarm.typeclasses.instances.OptionInstances;
 import io.codeswarm.typeclasses.instances.StringInstances;
 import io.codeswarm.typeclasses.instances.ValidatedInstances;
-import java.util.List;
 
 /**
- * Demonstrates the algebraic data types introduced in milestone 0.4 and their
+ * Demonstrates the algebraic data types introduced in milestone 0.4.x and their
  * compositional typeclass instances.
  */
 public final class AdtExample {
@@ -23,11 +22,12 @@ public final class AdtExample {
     /**
      * Runs a small demonstration of Option, Either and Validated.
      *
+     * @param args ignored command-line arguments
      */
-    static void main() {
+    public static void main(final String[] args) {
         final Option<Integer> option = Option.some(21).map(value -> value * 2);
         final Either<String, Integer> either = Either.<String, Integer>right(21).map(value -> value * 2);
-        final Validated<String, Integer> validated = Validated.invalid(List.of("name is empty", "age is negative"));
+        final Validated<String, Integer> validated = Validated.invalid("name is empty", "age is negative");
 
         System.out.println(OptionInstances.show(IntegerInstances.SHOW).show(option));
         System.out.println(EitherInstances.show(StringInstances.SHOW, IntegerInstances.SHOW).show(either));
