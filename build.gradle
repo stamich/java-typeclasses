@@ -4,9 +4,9 @@ plugins {
 }
 
 group = 'io.codeswarm'
-version = '0.1.1'
+version = '0.2.0'
 
-description = 'Educational implementation of the typeclass pattern in modern Java.'
+description = 'Educational implementation of typeclass-oriented programming and basic algebraic typeclasses in modern Java.'
 
 java {
     toolchain {
