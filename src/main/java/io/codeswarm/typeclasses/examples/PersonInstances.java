@@ -14,26 +14,26 @@ import io.codeswarm.typeclasses.core.Show;
 public final class PersonInstances {
 
     /** Compact representation containing only the person's name. */
-    public static final Show<Person> COMPACT_SHOW = Person::name;
+    public static final Show<Person> SHOW_COMPACT = Person::name;
 
     /** Verbose representation containing both the person's name and age. */
-    public static final Show<Person> VERBOSE_SHOW =
+    public static final Show<Person> SHOW_VERBOSE =
             person -> "%s (%d)".formatted(person.name(), person.age());
 
     /** Equality based on both record components. */
-    public static final Eq<Person> BY_ALL_FIELDS =
+    public static final Eq<Person> EQ_ALL_FIELDS =
             (left, right) -> left.name().equals(right.name()) && left.age() == right.age();
 
     /** Case-insensitive equality based only on the person's name. */
-    public static final Eq<Person> BY_NAME =
+    public static final Eq<Person> EQ_NAME =
             (left, right) -> left.name().equalsIgnoreCase(right.name());
 
-    /** Orders people by age. */
-    public static final Ord<Person> BY_AGE =
+    /** Orders people by age and therefore considers equal ages equivalent. */
+    public static final Ord<Person> ORD_AGE =
             (left, right) -> Integer.compare(left.age(), right.age());
 
     /** Orders people case-insensitively by name. */
-    public static final Ord<Person> BY_NAME_ORDER =
+    public static final Ord<Person> ORD_NAME =
             (left, right) -> left.name().compareToIgnoreCase(right.name());
 
     private PersonInstances() {

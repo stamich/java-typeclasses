@@ -8,9 +8,6 @@ package io.codeswarm.typeclasses.algebra;
  * combine(combine(a, b), c) == combine(a, combine(b, c))
  * }</pre>
  *
- * <p>Milestone 0.2 documents this law but deliberately leaves systematic law
- * verification to milestone 0.3.</p>
- *
  * @param <A> the value type
  */
 @FunctionalInterface

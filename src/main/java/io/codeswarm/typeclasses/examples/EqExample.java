@@ -16,7 +16,7 @@ public final class EqExample {
     static void main() {
         final var alice30 = new Person("Alice", 30);
         final var alice40 = new Person("ALICE", 40);
-        System.out.println(EqFunctions.equal(alice30, alice40, PersonInstances.BY_ALL_FIELDS));
-        System.out.println(EqFunctions.equal(alice30, alice40, PersonInstances.BY_NAME));
+        System.out.println(EqFunctions.equal(alice30, alice40, PersonInstances.EQ_ALL_FIELDS));
+        System.out.println(EqFunctions.equal(alice30, alice40, PersonInstances.EQ_NAME));
     }
 }

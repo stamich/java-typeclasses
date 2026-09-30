@@ -2,6 +2,40 @@
 
 All notable changes to the project are documented in this file.
 
+## 0.3.0 — Typeclass Laws and Property-Based Testing
+
+### Added
+
+- Reusable test-scope `EqLaws`, `OrdLaws`, `SemigroupLaws`, and `MonoidLaws`.
+- jqwik 1.10.1 for property-based testing on the JUnit Platform.
+- Property suites for Integer, String, LocalDate, List, and Person instances.
+- Custom jqwik generators for dates, immutable lists, and `Person`.
+- `UnlawfulInstancesTest`, demonstrating that integer subtraction implements the Java shape of a semigroup but violates associativity.
+- `docs/LAWS.md` explaining executable algebraic contracts and property-based verification.
+- Detailed milestone 0.3 implementation task list.
+
+### Changed
+
+- Project version advanced from `0.2.0` to `0.3.0`.
+- `PersonInstances` names now include their typeclass family: `SHOW_COMPACT`, `SHOW_VERBOSE`, `EQ_ALL_FIELDS`, `EQ_NAME`, `ORD_AGE`, and `ORD_NAME`.
+- Existing examples and unit tests were updated for the normalized instance names.
+- README, architecture, algebra, typeclass documentation and roadmap now describe executable laws.
+- `Semigroup` Javadoc no longer describes law verification as future work.
+
+### Removed
+
+- Ambiguous pre-0.3 `PersonInstances` constant names. No deprecated aliases were retained because the API is still pre-1.0.
+- Stale milestone-0.2 documentation describing property-based law verification as future work.
+- No generated build output, IDE state, obsolete scripts or unused compatibility shims are included.
+
+### Design notes
+
+- Law helpers remain under `src/test` and therefore do not expand the production API.
+- Laws compare algebraic results using explicit `Eq` instances rather than `Objects.equals`.
+- Focused unit tests are retained alongside property tests; the two test styles serve complementary purposes.
+- jqwik is test-only and does not leak into production dependencies.
+- ADTs, HKT, `Functor`, `Applicative`, `Monad`, registries and automatic derivation remain outside milestone 0.3.
+
 ## 0.2.0 — Basic Algebraic Typeclasses
 
 ### Added
@@ -41,7 +75,7 @@ All notable changes to the project are documented in this file.
 - Domain types remain unaware of their typeclass instances.
 - Instance selection remains explicit; no registry, reflection or automatic resolution was introduced.
 - `Ord<A>` refines `Eq<A>` and `Monoid<A>` refines `Semigroup<A>`.
-- Algebraic laws are documented but systematic property-based verification is intentionally deferred to milestone 0.3.
+- Algebraic laws were documented in 0.2 and are executable from milestone 0.3 onward.
 - HKT, ADTs, `Functor`, `Applicative` and `Monad` remain out of scope for YAGNI reasons.
 
 ## 0.1.1 — Foundation Hardening
