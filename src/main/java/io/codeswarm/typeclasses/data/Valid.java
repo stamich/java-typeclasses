@@ -1,6 +1,5 @@
 package io.codeswarm.typeclasses.data;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -28,7 +27,7 @@ public record Valid<E, A>(A value) implements Validated<E, A> {
     /** {@inheritDoc} */
     @Override
     public <T> T fold(
-            final Function<? super List<E>, ? extends T> onInvalid,
+            final Function<? super NonEmptyList<E>, ? extends T> onInvalid,
             final Function<? super A, ? extends T> onValid) {
         Objects.requireNonNull(onInvalid, "onInvalid");
         Objects.requireNonNull(onValid, "onValid");

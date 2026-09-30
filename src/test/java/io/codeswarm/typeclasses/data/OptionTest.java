@@ -35,4 +35,11 @@ class OptionTest {
         assertEquals(7, Option.<Integer>none().getOrElse(() -> 7));
         assertFalse(Option.some(1).isEmpty());
     }
+    /** Verifies conditional lazy construction. */
+    @Test
+    void shouldCreateOptionWhenConditionIsTrue() {
+        assertEquals(Option.some(42), Option.when(true, () -> 42));
+        assertEquals(Option.none(), Option.when(false, () -> 42));
+    }
+
 }

@@ -48,6 +48,23 @@ public sealed interface Option<A> permits Some, None {
     }
 
     /**
+     * Creates a present option only when the condition is true.
+     *
+     * <p>The supplier is evaluated lazily and only for the true branch.</p>
+     *
+     * @param condition condition deciding whether a value is created
+     * @param supplier value supplier used when the condition is true
+     * @param <A> value type
+     * @return present or empty option
+     */
+    static <A> Option<A> when(
+            final boolean condition,
+            final Supplier<? extends A> supplier) {
+        Objects.requireNonNull(supplier, "supplier");
+        return condition ? some(supplier.get()) : none();
+    }
+
+    /**
      * Transforms a present value while preserving absence.
      *
      * @param mapper transformation applied to a present value

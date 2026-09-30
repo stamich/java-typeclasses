@@ -1,7 +1,9 @@
 package io.codeswarm.typeclasses.data;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Represents a value that is either a left value, commonly an error, or a right
@@ -37,6 +39,60 @@ public sealed interface Either<L, R> permits Left, Right {
      */
     static <L, R> Either<L, R> right(final R value) {
         return new Right<>(Objects.requireNonNull(value, "value"));
+    }
+
+    /**
+     * Creates a right value when {@code condition} is true and a left value
+     * otherwise. Suppliers are evaluated lazily.
+     *
+     * @param condition branch condition
+     * @param right right-value supplier
+     * @param left left-value supplier
+     * @param <L> left type
+     * @param <R> right type
+     * @return selected branch
+     */
+    static <L, R> Either<L, R> cond(
+            final boolean condition,
+            final Supplier<? extends R> right,
+            final Supplier<? extends L> left) {
+        Objects.requireNonNull(right, "right");
+        Objects.requireNonNull(left, "left");
+        return condition ? Either.right(right.get()) : Either.left(left.get());
+    }
+
+    /**
+     * Converts a nullable value into an {@code Either}.
+     *
+     * @param value nullable right value
+     * @param ifNull left-value supplier used for {@code null}
+     * @param <L> left type
+     * @param <R> right type
+     * @return right for a non-null value, otherwise left
+     */
+    static <L, R> Either<L, R> fromNullable(
+            final R value,
+            final Supplier<? extends L> ifNull) {
+        Objects.requireNonNull(ifNull, "ifNull");
+        return value == null ? Either.left(ifNull.get()) : Either.right(value);
+    }
+
+    /**
+     * Converts a JDK {@link Optional} into an {@code Either}.
+     *
+     * @param optional optional right value
+     * @param ifEmpty left-value supplier used for an empty optional
+     * @param <L> left type
+     * @param <R> right type
+     * @return right for a present value, otherwise left
+     */
+    static <L, R> Either<L, R> fromOptional(
+            final Optional<? extends R> optional,
+            final Supplier<? extends L> ifEmpty) {
+        Objects.requireNonNull(optional, "optional");
+        Objects.requireNonNull(ifEmpty, "ifEmpty");
+        return optional.<Either<L, R>>map(Either::right)
+                .orElseGet(() -> Either.left(ifEmpty.get()));
     }
 
     /**

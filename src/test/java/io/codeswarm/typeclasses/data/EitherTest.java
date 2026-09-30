@@ -1,5 +1,6 @@
 package io.codeswarm.typeclasses.data;
 
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -37,4 +38,20 @@ class EitherTest {
         assertEquals("error: boom", Either.<String, Integer>left("boom")
                 .fold(value -> "error: " + value, String::valueOf));
     }
+    /** Verifies conditional construction. */
+    @Test
+    void shouldConstructConditionally() {
+        assertEquals(Either.right(42), Either.cond(true, () -> 42, () -> "error"));
+        assertEquals(Either.left("error"), Either.cond(false, () -> 42, () -> "error"));
+    }
+
+    /** Verifies nullable and Optional adapters. */
+    @Test
+    void shouldAdaptJavaOptionalValues() {
+        assertEquals(Either.right(42), Either.fromNullable(42, () -> "missing"));
+        assertEquals(Either.left("missing"), Either.fromNullable(null, () -> "missing"));
+        assertEquals(Either.right(42), Either.fromOptional(Optional.of(42), () -> "missing"));
+        assertEquals(Either.left("missing"), Either.fromOptional(Optional.empty(), () -> "missing"));
+    }
+
 }

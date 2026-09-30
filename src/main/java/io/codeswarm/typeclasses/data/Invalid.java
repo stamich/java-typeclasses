@@ -1,31 +1,28 @@
 package io.codeswarm.typeclasses.data;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
 /**
  * Failed branch of {@link Validated}, containing one or more validation errors.
  *
- * @param errors immutable non-empty list of validation errors
+ * <p>The non-empty invariant is represented by {@link NonEmptyList} rather than
+ * checked dynamically in this record.</p>
+ *
+ * @param errors non-empty validation errors
  * @param <E> validation error type
  * @param <A> successful value type
  */
-public record Invalid<E, A>(List<E> errors) implements Validated<E, A> {
+public record Invalid<E, A>(NonEmptyList<E> errors) implements Validated<E, A> {
 
     /**
      * Creates an invalid validation result.
      *
-     * @param errors non-empty error list
-     * @throws NullPointerException when the list or an element is {@code null}
-     * @throws IllegalArgumentException when the list is empty
+     * @param errors non-empty error collection
+     * @throws NullPointerException when {@code errors} is null
      */
     public Invalid {
         Objects.requireNonNull(errors, "errors");
-        if (errors.isEmpty()) {
-            throw new IllegalArgumentException("errors must not be empty");
-        }
-        errors = List.copyOf(errors);
     }
 
     /** {@inheritDoc} */
@@ -38,7 +35,7 @@ public record Invalid<E, A>(List<E> errors) implements Validated<E, A> {
     /** {@inheritDoc} */
     @Override
     public <T> T fold(
-            final Function<? super List<E>, ? extends T> onInvalid,
+            final Function<? super NonEmptyList<E>, ? extends T> onInvalid,
             final Function<? super A, ? extends T> onValid) {
         Objects.requireNonNull(onInvalid, "onInvalid");
         Objects.requireNonNull(onValid, "onValid");

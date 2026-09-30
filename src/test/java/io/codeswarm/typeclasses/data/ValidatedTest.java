@@ -1,11 +1,8 @@
 package io.codeswarm.typeclasses.data;
 
-import java.util.ArrayList;
-import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Unit tests for {@link Validated}. */
@@ -20,24 +17,22 @@ class ValidatedTest {
     /** Verifies that mapping preserves accumulated errors. */
     @Test
     void shouldPreserveInvalidErrors() {
-        final Validated<String, Integer> invalid = Validated.invalid(List.of("first", "second"));
-        assertEquals(Validated.invalid(List.of("first", "second")), invalid.map(value -> value * 2));
+        final Validated<String, Integer> invalid = Validated.invalid("first", "second");
+        assertEquals(Validated.invalid("first", "second"), invalid.map(value -> value * 2));
         assertTrue(invalid.isInvalid());
     }
 
-    /** Verifies the invariant that invalid values contain at least one error. */
+    /** Verifies single-error convenience construction. */
     @Test
-    void shouldRejectEmptyErrorList() {
-        assertThrows(IllegalArgumentException.class, () -> Validated.invalid(List.of()));
+    void shouldCreateSingleErrorInvalid() {
+        final Invalid<String, Integer> invalid = (Invalid<String, Integer>) Validated.<String, Integer>invalid("error");
+        assertEquals(NonEmptyList.one("error"), invalid.errors());
     }
 
-    /** Verifies that the invalid branch defensively copies its error list. */
+    /** Verifies that an invalid branch always contains at least one error structurally. */
     @Test
-    void shouldKeepErrorsImmutable() {
-        final List<String> errors = new ArrayList<>();
-        errors.add("first");
-        final Invalid<String, Integer> invalid = new Invalid<>(errors);
-        errors.add("second");
-        assertEquals(List.of("first"), invalid.errors());
+    void shouldExposeNonEmptyErrors() {
+        final Invalid<String, Integer> invalid = new Invalid<>(NonEmptyList.of("first", "second"));
+        assertEquals(2, invalid.errors().size());
     }
 }
