@@ -4,13 +4,13 @@ plugins {
 }
 
 group = 'io.codeswarm'
-version = '0.4.0'
+version = '0.4.1'
 
-description = 'Educational implementation of typeclass-oriented programming, algebraic data types, compositional typeclass instances, and executable algebraic laws in modern Java.'
+description = 'Educational implementation of typeclass-oriented programming, algebraic data types, smart constructors, domain invariants, compositional instances, and executable algebraic laws in modern Java.'
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
+        languageVersion = JavaLanguageVersion.of(21)
     }
     withSourcesJar()
     withJavadocJar()
