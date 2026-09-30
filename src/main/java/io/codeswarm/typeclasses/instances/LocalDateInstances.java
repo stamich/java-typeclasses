@@ -9,7 +9,7 @@ import java.time.format.DateTimeFormatter;
  * Standard typeclass instances for {@link LocalDate} values.
  *
  * <p>This class also demonstrates an important advantage of the typeclass
- * pattern: behaviour can be added to a type from the JDK without modifying or
+ * pattern: behavior can be added to a type from the JDK without modifying or
  * extending that type.</p>
  */
 public final class LocalDateInstances {
@@ -19,7 +19,7 @@ public final class LocalDateInstances {
      * {@code 2026-09-30}.
      */
     public static final Show<LocalDate> ISO_SHOW =
-            date -> DateTimeFormatter.ISO_LOCAL_DATE.format(date);
+            DateTimeFormatter.ISO_LOCAL_DATE::format;
 
     private LocalDateInstances() {
         throw new AssertionError("Instances holder must not be instantiated");

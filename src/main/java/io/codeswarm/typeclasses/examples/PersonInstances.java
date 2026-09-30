@@ -6,7 +6,7 @@ import io.codeswarm.typeclasses.core.Show;
  * Typeclass instances associated with the example {@link Person} domain type.
  *
  * <p>The instances are deliberately kept outside {@code Person}. This makes
- * the domain model independent from presentation concerns and permits several
+ * the domain model independent of presentation concerns and permits several
  * valid representations to coexist.</p>
  */
 public final class PersonInstances {

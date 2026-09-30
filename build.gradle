@@ -10,7 +10,7 @@ description = 'Educational implementation of the typeclass pattern in modern Jav
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
+        languageVersion = JavaLanguageVersion.of(21)
     }
     withSourcesJar()
     withJavadocJar()

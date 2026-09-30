@@ -20,7 +20,7 @@ public final class TypeClassFunctions {
      * Renders a value using the supplied {@link Show} instance.
      *
      * @param value the value to render
-     * @param show the typeclass instance that defines the rendering behaviour
+     * @param show the typeclass instance that defines the rendering behavior
      * @param <A> the value type
      * @return the representation produced by {@code show}
      * @throws NullPointerException if {@code show} is {@code null}

@@ -16,7 +16,7 @@ class TypeClassFunctionsTest {
      */
     @Test
     void shouldUseProvidedShowInstance() {
-        final Show<Integer> hexadecimal = value -> Integer.toHexString(value);
+        final Show<Integer> hexadecimal = Integer::toHexString;
 
         assertEquals("ff", TypeClassFunctions.show(255, hexadecimal));
     }
