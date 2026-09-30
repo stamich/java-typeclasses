@@ -1,14 +1,12 @@
 package io.codeswarm.typeclasses.examples;
 
-import io.codeswarm.typeclasses.core.TypeClassFunctions;
 import io.codeswarm.typeclasses.instances.IntegerInstances;
 import io.codeswarm.typeclasses.instances.LocalDateInstances;
+import io.codeswarm.typeclasses.syntax.ShowFunctions;
 
 import java.time.LocalDate;
 
-/**
- * Small executable demonstration of explicit typeclass instance passing.
- */
+/** Demonstrates explicit use of {@code Show} instances. */
 public final class ShowExample {
 
     private ShowExample() {
@@ -16,17 +14,16 @@ public final class ShowExample {
     }
 
     /**
-     * Runs the milestone 0.1.1 example.
+     * Runs the show example.
      *
+     * @param args command-line arguments; ignored
      */
-    static void main() {
+    public static void main(final String[] args) {
         final var person = new Person("Alice", 30);
-
-        System.out.println(TypeClassFunctions.show(person, PersonInstances.COMPACT_SHOW));
-        System.out.println(TypeClassFunctions.show(person, PersonInstances.VERBOSE_SHOW));
-        System.out.println(TypeClassFunctions.show(42, IntegerInstances.SHOW));
-        System.out.println(TypeClassFunctions.show(
-                LocalDate.of(2026, 9, 30),
-                LocalDateInstances.ISO_SHOW));
+        System.out.println(ShowFunctions.show(person, PersonInstances.COMPACT_SHOW));
+        System.out.println(ShowFunctions.show(person, PersonInstances.VERBOSE_SHOW));
+        System.out.println(ShowFunctions.show(42, IntegerInstances.SHOW));
+        System.out.println(ShowFunctions.show(
+                LocalDate.of(2026, 9, 30), LocalDateInstances.ISO_SHOW));
     }
 }
