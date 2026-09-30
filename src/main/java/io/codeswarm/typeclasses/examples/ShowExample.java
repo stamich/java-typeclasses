@@ -18,9 +18,8 @@ public final class ShowExample {
     /**
      * Runs the milestone 0.1.1 example.
      *
-     * @param args command-line arguments; ignored
      */
-    public static void main(final String[] args) {
+    static void main() {
         final var person = new Person("Alice", 30);
 
         System.out.println(TypeClassFunctions.show(person, PersonInstances.COMPACT_SHOW));
