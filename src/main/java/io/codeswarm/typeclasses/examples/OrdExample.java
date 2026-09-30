@@ -16,7 +16,7 @@ public final class OrdExample {
     static void main() {
         final var alice = new Person("Alice", 35);
         final var bob = new Person("Bob", 27);
-        System.out.println(OrdFunctions.min(alice, bob, PersonInstances.BY_AGE));
-        System.out.println(OrdFunctions.min(alice, bob, PersonInstances.BY_NAME_ORDER));
+        System.out.println(OrdFunctions.min(alice, bob, PersonInstances.ORD_AGE));
+        System.out.println(OrdFunctions.min(alice, bob, PersonInstances.ORD_NAME));
     }
 }
