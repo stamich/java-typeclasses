@@ -23,9 +23,8 @@ public final class AdtExample {
     /**
      * Runs a small demonstration of Option, Either and Validated.
      *
-     * @param args ignored command-line arguments
      */
-    public static void main(final String[] args) {
+    static void main() {
         final Option<Integer> option = Option.some(21).map(value -> value * 2);
         final Either<String, Integer> either = Either.<String, Integer>right(21).map(value -> value * 2);
         final Validated<String, Integer> validated = Validated.invalid(List.of("name is empty", "age is negative"));
