@@ -4,9 +4,9 @@ plugins {
 }
 
 group = 'io.codeswarm'
-version = '0.2.0'
+version = '0.3.0'
 
-description = 'Educational implementation of typeclass-oriented programming and basic algebraic typeclasses in modern Java.'
+description = 'Educational implementation of typeclass-oriented programming, algebraic typeclasses, and executable algebraic laws in modern Java.'
 
 java {
     toolchain {
@@ -23,6 +23,7 @@ repositories {
 dependencies {
     testImplementation platform('org.junit:junit-bom:6.1.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'net.jqwik:jqwik:1.10.1'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
