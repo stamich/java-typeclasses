@@ -1,103 +1,114 @@
-# Architecture — Milestone 0.2
+# Architecture — Milestone 0.3
 
-## Purpose
+## Overview
 
-Milestone 0.2 evolves the 0.1.1 foundation into a small algebraic typeclass library while deliberately retaining explicit, understandable mechanics.
-
-## Layers
+Milestone 0.3 preserves the small production architecture from 0.2 and adds a separate verification layer in test scope.
 
 ```text
-Domain values
-(Person, Integer, String, LocalDate, List)
-        │
-        │ described by external instances
-        ▼
-Typeclasses
-┌──────────────────────────────┐
-│ Show<A>                      │
-│ Eq<A>  ◄── Ord<A>            │
-│ Semigroup<A> ◄── Monoid<A>   │
-└──────────────┬───────────────┘
-               │ implemented by
-               ▼
-Instances
-(IntegerInstances, StringInstances,
- LocalDateInstances, ListInstances,
- PersonInstances)
-               │ consumed by
-               ▼
-Generic syntax/algorithms
-(ShowFunctions, EqFunctions,
- OrdFunctions, SemigroupFunctions,
- MonoidFunctions)
+                     Domain types
+                         │
+                         │ described by
+                         ▼
+              ┌─────────────────────┐
+              │     Typeclasses     │
+              │                     │
+              │ Show<A>             │
+              │ Eq<A> <- Ord<A>     │
+              │ Semigroup<A>        │
+              │     ^               │
+              │     │               │
+              │ Monoid<A>           │
+              └─────────┬───────────┘
+                        │ implemented as explicit values
+                        ▼
+                    Instances
+                        │
+                        │ exercised by
+              ┌─────────▼───────────┐
+              │ Syntax / algorithms │
+              └─────────────────────┘
+
+Test verification layer:
+
+Instances + generated values
+            │
+            ▼
+      reusable Laws
+            │
+            ▼
+    jqwik properties
 ```
 
-## Package responsibilities
+## Production packages
 
 ### `core`
 
-Contains small capability interfaces that are not specifically combination algebras: `Show`, `Eq`, and `Ord`.
+Defines non-algebraic/general typeclasses: `Show`, `Eq`, and `Ord`.
 
 ### `algebra`
 
-Contains algebraic combination structures: `Semigroup` and `Monoid`.
-
-### `syntax`
-
-Contains reusable algorithms that consume typeclass instances explicitly. A separate class exists for each family to avoid a growing generic utility class.
+Defines `Semigroup` and `Monoid`.
 
 ### `instances`
 
-Contains reusable instances for JDK types and generic instance factories such as list concatenation.
+Contains reusable instances for JDK types.
 
 ### `examples`
 
-Contains the `Person` domain type, its domain-specific instances, and executable examples.
+Contains the `Person` record, its external instances and executable examples.
 
-## Type relationships
+### `syntax`
 
-`Ord<A>` extends `Eq<A>` because a total ordering determines equality through `compare(a, b) == 0`.
+Contains small generic algorithms grouped by typeclass family. This avoids a growing utility god class.
 
-`Monoid<A>` extends `Semigroup<A>` because every monoid provides the associative `combine` operation and additionally supplies an identity value.
+## Test packages
 
-`Show<A>` is intentionally independent from those hierarchies.
+### `laws`
 
-## Explicit dictionary passing
+Contains reusable executable laws. They are deliberately test infrastructure rather than production API.
 
-A generic algorithm receives its behaviour as an argument:
+### `properties`
 
-```java
-MonoidFunctions.combineAll(values, IntegerInstances.ADDITION);
+Contains jqwik property suites applying the laws to concrete instances.
+
+### existing focused unit-test packages
+
+Retain example-based tests for direct behavior, edge cases and readability.
+
+## Dependency direction
+
+Production code never depends on test laws or jqwik:
+
+```text
+core/algebra <- instances/examples/syntax
+
+production code
+     ▲
+     │ tested by
+laws + properties + JUnit tests
 ```
 
-No hidden global lookup occurs. This keeps dependencies local, testable, and visible.
+## SOLID / KISS / DRY / YAGNI
 
-## Multiple instances
+- **SRP:** each typeclass, syntax helper, law family and property suite has one purpose.
+- **OCP:** new instances can be added without modifying domain models or generic algorithms.
+- **DIP:** generic algorithms and laws depend on abstractions such as `Eq` and `Semigroup`.
+- **KISS:** instance passing remains explicit; no resolver or reflection is introduced.
+- **DRY:** algebraic laws are encoded once and reused by many property suites.
+- **YAGNI:** law helpers remain test-only until there is a demonstrated need to publish them.
 
-A Java class must not be forced to choose one globally privileged behaviour. For example, both integer addition and multiplication form monoids, while `Person` can be ordered by age or by name.
+## Naming rule for instance constants
 
-This is why instances remain external values rather than interfaces implemented by domain classes.
+When one holder exposes several typeclass families, names include the family:
 
-## Immutability boundary
+```text
+SHOW_COMPACT
+EQ_NAME
+ORD_AGE
+```
 
-The list concatenation monoid does not mutate either input. It returns an immutable copy. This avoids surprising aliasing effects and makes the algebraic operation easier to reason about.
+This scales better than ambiguous names such as `BY_NAME`.
 
-## SOLID
+## Null policy
 
-- **SRP:** interfaces, instances, algorithms, and domain state have separate responsibilities.
-- **OCP:** add instances and generic consumers without changing domain classes.
-- **LSP:** subtype relationships reflect actual capability refinement.
-- **ISP:** each typeclass exposes the smallest meaningful interface.
-- **DIP:** generic algorithms depend on abstractions supplied by callers.
-
-## KISS, DRY, YAGNI
-
-The milestone intentionally excludes automatic instance discovery, reflection, annotations, DI frameworks, HKT encoding, and advanced FP abstractions. Those features would obscure the core concepts or introduce requirements that do not yet exist.
-
-## Compatibility decision from 0.1.1
-
-`TypeClassFunctions` was removed rather than retained as a deprecated facade. The project is still pre-1.0 and has no stable compatibility promise. Keeping it would duplicate the new syntax API and violate the cleanup goal.
-
-## Deferred design questions
-
-Milestone 0.3 will address executable algebraic laws. HKT representation, ADTs, instance resolution and derivation are intentionally deferred to later roadmap stages.
+The project still does not impose one global null policy. Instances are tested with their intended non-null domains. Null-handling semantics may be introduced later only if there is a concrete use case.

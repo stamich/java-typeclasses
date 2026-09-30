@@ -6,32 +6,20 @@ Initial experiment proving that the typeclass pattern can be represented in Java
 
 ## 0.1.1 — Foundation hardening
 
-- modern build baseline;
-- `Show<A>`;
-- explicit dictionary passing;
-- external instances;
-- clean package boundaries;
-- tests, CI and documentation.
+Modern build baseline, `Show<A>`, explicit dictionary passing, external instances, tests, CI and documentation.
 
-## 0.2 — Basic algebraic typeclasses — current
+## 0.2 — Basic algebraic typeclasses
 
-- `Eq<A>`;
-- `Ord<A>`;
-- `Semigroup<A>`;
-- `Monoid<A>`;
-- multiple instances for the same type;
-- immutable list concatenation;
-- dedicated syntax helpers;
-- algebra documentation.
+`Eq`, `Ord`, `Semigroup`, `Monoid`, multiple instances, immutable list concatenation and focused syntax helpers.
 
-## 0.3 — Typeclass laws
+## 0.3 — Typeclass laws — current
 
-Planned:
-
-- reusable `EqLaws`, `OrdLaws`, `SemigroupLaws`, `MonoidLaws`;
+- reusable `EqLaws`, `OrdLaws`, `SemigroupLaws`, `MonoidLaws` in test scope;
 - jqwik property-based testing;
-- associativity, identity, reflexivity, symmetry, transitivity and ordering properties;
-- lawful-instance test harness.
+- properties for Integer, String, LocalDate, List and Person instances;
+- explicit demonstration of an unlawful semigroup;
+- normalized Person instance naming;
+- law-focused documentation.
 
 ## 0.4 — Algebraic data types
 
@@ -62,7 +50,7 @@ Planned generic folding and traversal abstractions.
 
 ## 0.8 — Instance resolution experiments
 
-Possible explicit registry / `summon` experiments, kept outside the fundamental model.
+Possible explicit registry / `summon` experiments kept outside the fundamental model.
 
 ## 0.9 — Automatic derivation
 

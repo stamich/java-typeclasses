@@ -1,83 +1,54 @@
 # Typeclasses in Java
 
-## Concept
+## External polymorphism
 
-A typeclass describes behaviour for a type without requiring that type to inherit from or implement the behaviour interface.
-
-In this project a typeclass is represented by a small generic interface and an instance is an ordinary Java value implementing that interface.
-
-## Show
+A typeclass describes behavior for a type without forcing the domain type to inherit from that behavior.
 
 ```java
 @FunctionalInterface
-public interface Show<A> {
-    String show(A value);
+public interface Eq<A> {
+    boolean eqv(A left, A right);
 }
 ```
 
-`Person` does not implement `Show<Person>`. Instead, separate values provide compact and verbose representations.
+A `Person` record therefore remains a plain domain model while several `Eq<Person>` values may coexist.
+
+## Explicit dictionary passing
+
+Java does not provide Scala-style `given` / `using`. This project deliberately passes instances explicitly:
+
+```java
+EqFunctions.equal(left, right, PersonInstances.EQ_NAME);
+```
+
+The approach is transparent, testable and requires no reflection or global registry.
+
+## Show
+
+`Show<A>` represents presentation independently from the domain type. Multiple renderings can coexist.
 
 ## Eq
 
-`Eq<A>` represents selectable equality semantics:
-
-```java
-Eq<Person> byName =
-        (left, right) -> left.name().equalsIgnoreCase(right.name());
-```
-
-This differs from `Object.equals`: multiple valid equality policies can coexist and callers choose one explicitly.
+`Eq<A>` represents a chosen equivalence relation. A lawful equality is reflexive, symmetric and transitive.
 
 ## Ord
 
-`Ord<A>` refines `Eq<A>` with a comparison operation. Equality follows naturally when `compare(left, right) == 0`.
+`Ord<A>` extends `Eq<A>` and derives equality from zero comparison. Different orderings may intentionally induce different equivalence classes, such as ordering `Person` only by age.
 
-A `Person` can therefore be ordered by age in one algorithm and by name in another without changing the record.
+## Semigroup and Monoid
 
-## Semigroup
+`Semigroup<A>` describes associative combination. `Monoid<A>` adds an identity element.
 
-A semigroup consists of a set of values and an associative `combine` operation.
+Milestone 0.3 no longer leaves these requirements as documentation only: property tests execute them through reusable law helpers.
 
-Examples include maximum over integers and string concatenation.
+See [`LAWS.md`](LAWS.md).
 
-Milestone 0.2 documents associativity but does not attempt to prove it with a few example-based unit tests. Systematic law verification belongs to 0.3.
+## Multiple instances
 
-## Monoid
+The same Java type may have multiple useful instances. `Integer` has both addition and multiplication monoids. `Person` has several equality and ordering interpretations.
 
-A monoid is a semigroup with an identity element.
+This is a major difference from encoding behavior directly through inheritance on the data type.
 
-Examples:
+## Current limitation
 
-| Type / operation | `combine` | identity |
-| --- | --- | --- |
-| Integer addition | `+` | `0` |
-| Integer multiplication | `*` | `1` |
-| String concatenation | concatenation | `""` |
-| List concatenation | concatenation | `[]` |
-
-## Explicit instance selection
-
-```java
-var sum = MonoidFunctions.combineAll(values, IntegerInstances.ADDITION);
-var product = MonoidFunctions.combineAll(values, IntegerInstances.MULTIPLICATION);
-```
-
-The generic algorithm does not need to know anything about addition or multiplication. Behaviour is selected by supplying the appropriate dictionary value.
-
-## Typeclasses versus inheritance
-
-With inheritance, a domain type usually embeds one implementation of an interface. Typeclasses invert that relationship: external instances describe the type.
-
-This is especially useful when:
-
-- the domain type cannot be modified, such as `LocalDate`;
-- several valid implementations exist for the same type;
-- domain data should remain independent of presentation or algorithm policy.
-
-## Typeclasses versus Strategy
-
-The Java representation resembles the Strategy pattern because behaviour is passed as an object. The typeclass perspective adds a stronger focus on generic capability interfaces, reusable instances, algebraic laws and composition across types.
-
-## Deliberately missing in 0.2
-
-There is no global registry, implicit search, `summon`, reflection, annotations, automatic derivation, higher-kinded type encoding, `Functor`, `Applicative`, or `Monad` yet.
+Java has no native higher-kinded types. Milestone 0.3 intentionally does not attempt to solve that problem yet. HKT encoding is planned only after the first-order algebra and laws are stable.

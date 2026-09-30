@@ -1,17 +1,29 @@
 # Java Typeclasses
 
-An educational implementation of **typeclass-oriented programming in modern Java**.
+Educational implementation of typeclass-oriented functional programming in modern Java.
 
-Milestone **0.2** introduces the first algebraic typeclasses on top of the hardened 0.1.1 foundation. The project deliberately keeps typeclass instances as explicit values and uses explicit dictionary passing so that the mechanism remains visible.
+Milestone **0.3.0** builds on the algebra introduced in 0.2 and adds **executable typeclass laws** verified with property-based tests.
+
+## Goals
+
+The project demonstrates how typeclass-style polymorphism can be expressed in Java while keeping domain models independent from behavior policies. It deliberately favors explicit mechanics over framework magic.
+
+Core design principles:
+
+- **SOLID** — small abstractions with focused responsibilities;
+- **KISS** — explicit instance passing instead of hidden resolution;
+- **DRY** — reusable law helpers remove duplicated test logic;
+- **YAGNI** — no HKT encoding, registry, reflection, annotations, `Functor` or `Monad` yet;
+- **immutability by default** — examples and collection instances do not mutate caller-owned data.
 
 ## Requirements
 
-- Java 21+
-- Gradle 9.8.0 (wrapper configuration is provided)
+- Java 21 or newer;
+- Gradle 9.8.0 when regenerating/running the wrapper;
+- JUnit 6.1.2;
+- jqwik 1.10.1 for property-based testing.
 
-The CI matrix verifies Java 21, 25 and 27.
-
-## What milestone 0.2 contains
+## Typeclasses implemented
 
 ```text
 Show<A>
@@ -27,63 +39,77 @@ Semigroup<A>
   Monoid<A>
 ```
 
-- `Show<A>` — rendering behavior introduced in 0.1.1.
-- `Eq<A>` — selectable equality semantics.
-- `Ord<A>` — total ordering that also provides equality.
-- `Semigroup<A>` — associative binary combination.
-- `Monoid<A>` — a semigroup with an identity element.
+`Show` is independent. `Ord` refines `Eq`; `Monoid` refines `Semigroup`.
 
-This milestone intentionally does **not** add HKT encoding, `Functor`, `Applicative`, `Monad`, reflection-based lookup, a global registry, annotations, or automatic derivation.
+## Why laws matter
 
-## Core idea
+Implementing an interface is not enough to create a valid algebraic instance. A `Semigroup<A>` must be associative, and a `Monoid<A>` must additionally have a left and right identity. Likewise, equality and ordering instances must satisfy their corresponding laws.
 
-A domain type does not implement its typeclass:
+Milestone 0.3 verifies these properties systematically using reusable law functions and jqwik-generated values.
+
+Examples:
+
+```text
+Eq:
+  reflexivity
+  symmetry
+  transitivity
+
+Ord:
+  reflexivity
+  sign antisymmetry
+  transitivity
+  equality consistency
+
+Semigroup:
+  associativity
+
+Monoid:
+  associativity
+  left identity
+  right identity
+```
+
+See [`docs/LAWS.md`](docs/LAWS.md) for details.
+
+## Explicit instances
+
+Domain types do not implement their typeclasses:
 
 ```java
 public record Person(String name, int age) {
 }
 ```
 
-Instead, behaviour exists independently:
+Instead, behavior is external:
 
 ```java
-public static final Eq<Person> BY_NAME =
-        (left, right) -> left.name().equalsIgnoreCase(right.name());
+public static final Eq<Person> EQ_ALL_FIELDS =
+        (left, right) -> left.name().equals(right.name())
+                && left.age() == right.age();
 
-public static final Ord<Person> BY_AGE =
-        (left, right) -> Integer.compare(left.age(), right.age());
+public static final Eq<Person> EQ_NAME =
+        (left, right) -> left.name().equalsIgnoreCase(right.name());
 ```
 
-The same domain value can therefore have several meaningful behaviors without modifying `Person`.
+This allows several valid interpretations for the same domain type.
 
-## Multiple instances for one type
+## Multiple lawful monoids for the same Java type
 
-`Integer` demonstrates why typeclass instances are values rather than behavior embedded in the data type:
+`Integer` has two useful monoids:
 
 ```java
 IntegerInstances.ADDITION
 IntegerInstances.MULTIPLICATION
 ```
 
-Both are lawful `Monoid<Integer>` instances but have different operations and identities:
-
-```text
-addition        combine = +    empty = 0
-multiplication  combine = *    empty = 1
-```
-
-A generic algorithm can select behavior explicitly:
+The same algorithm can therefore produce different results solely through the supplied instance:
 
 ```java
 var numbers = List.of(1, 2, 3, 4);
 
-var sum = MonoidFunctions.combineAll(
-        numbers,
-        IntegerInstances.ADDITION);
-
-var product = MonoidFunctions.combineAll(
-        numbers,
-        IntegerInstances.MULTIPLICATION);
+var sum = MonoidFunctions.combineAll(numbers, IntegerInstances.ADDITION);
+var product = MonoidFunctions.combineAll(numbers, IntegerInstances.MULTIPLICATION);
 ```
 
 Results:
@@ -93,109 +119,128 @@ Results:
 24
 ```
 
-## Semigroup versus Monoid
+## Property-based law verification
 
-A `Semigroup<A>` only knows how to combine two values. Consequently `SemigroupFunctions.combineAll` requires a non-empty iterable.
+A reusable law is independent from any specific instance:
 
-A `Monoid<A>` additionally defines `empty()`, so `MonoidFunctions.combineAll` also works for an empty iterable and returns the identity value.
+```java
+public static <A> boolean associative(
+        A first,
+        A second,
+        A third,
+        Semigroup<A> semigroup,
+        Eq<? super A> eq) {
 
-## Package structure
+    var left = semigroup.combine(semigroup.combine(first, second), third);
+    var right = semigroup.combine(first, semigroup.combine(second, third));
 
-```text
-io.codeswarm.typeclasses
-├── core
-│   ├── Show
-│   ├── Eq
-│   └── Ord
-├── algebra
-│   ├── Semigroup
-│   └── Monoid
-├── syntax
-│   ├── ShowFunctions
-│   ├── EqFunctions
-│   ├── OrdFunctions
-│   ├── SemigroupFunctions
-│   └── MonoidFunctions
-├── instances
-│   ├── IntegerInstances
-│   ├── StringInstances
-│   ├── LocalDateInstances
-│   └── ListInstances
-└── examples
-    ├── Person
-    ├── PersonInstances
-    ├── ShowExample
-    ├── EqExample
-    ├── OrdExample
-    ├── SemigroupExample
-    └── MonoidExample
+    return eq.eqv(left, right);
+}
 ```
 
-## Design principles
+jqwik then generates many values:
 
-### SOLID
+```java
+@Property
+void additionIsALawfulMonoid(
+        @ForAll int first,
+        @ForAll int second,
+        @ForAll int third) {
 
-- **SRP:** typeclasses define capabilities, instances define concrete semantics, syntax classes contain generic algorithms, domain records contain domain state and validation.
-- **OCP:** new instances can be added without modifying domain types or generic algorithms.
-- **LSP:** `Ord<A>` is a valid `Eq<A>` and `Monoid<A>` is a valid `Semigroup<A>`.
-- **ISP:** each typeclass exposes only the minimal operation necessary for its abstraction.
-- **DIP:** generic algorithms depend on `Show`, `Eq`, `Ord`, `Semigroup`, or `Monoid`, not on concrete implementations.
+    assertTrue(MonoidLaws.associative(
+            first,
+            second,
+            third,
+            IntegerInstances.ADDITION,
+            IntegerInstances.EQ));
+}
+```
 
-### KISS / DRY / YAGNI
+The tests also contain an intentionally unlawful subtraction semigroup to demonstrate that merely satisfying the Java interface is not sufficient.
 
-- explicit instance passing instead of a hidden runtime registry;
-- no reflection or dependency injection;
-- no HKT encoding before it is required;
-- no `Functor`/`Monad` before ADTs and laws are established;
-- each utility class covers one typeclass family;
-- reusable generic folds avoid duplicating combination logic.
+## Packages
+
+```text
+src/main/java/io/codeswarm/typeclasses/
+├── algebra/
+│   ├── Monoid.java
+│   └── Semigroup.java
+├── core/
+│   ├── Eq.java
+│   ├── Ord.java
+│   └── Show.java
+├── examples/
+│   ├── Person.java
+│   ├── PersonInstances.java
+│   └── ...
+├── instances/
+│   ├── IntegerInstances.java
+│   ├── ListInstances.java
+│   ├── LocalDateInstances.java
+│   └── StringInstances.java
+└── syntax/
+    ├── EqFunctions.java
+    ├── MonoidFunctions.java
+    ├── OrdFunctions.java
+    ├── SemigroupFunctions.java
+    └── ShowFunctions.java
+
+src/test/java/io/codeswarm/typeclasses/
+├── laws/
+│   ├── EqLaws.java
+│   ├── MonoidLaws.java
+│   ├── OrdLaws.java
+│   ├── SemigroupLaws.java
+│   └── UnlawfulInstancesTest.java
+├── properties/
+│   ├── IntegerInstancesProperties.java
+│   ├── ListInstancesProperties.java
+│   ├── LocalDateInstancesProperties.java
+│   ├── PersonInstancesProperties.java
+│   └── StringInstancesProperties.java
+└── ... existing focused unit tests
+```
+
+The law framework intentionally lives under `src/test`. It validates this project but is not yet committed as public production API.
 
 ## Build
-
-With a generated Gradle wrapper:
 
 ```bash
 ./gradlew clean check javadoc
 ```
 
-If the binary wrapper JAR is not present after extracting the source archive, regenerate it once with a local Gradle installation:
+`check` runs both normal JUnit tests and jqwik properties through the JUnit Platform.
+
+## CI
+
+GitHub Actions validates Java 21, 25 and 27 with:
 
 ```bash
-gradle wrapper --gradle-version 9.8.0
-```
-
-## Examples
-
-After compiling, run the example classes:
-
-```text
-ShowExample
-EqExample
-OrdExample
-SemigroupExample
-MonoidExample
+./gradlew clean check javadoc
 ```
 
 ## Documentation
 
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — architecture and design decisions.
-- [`docs/TYPECLASSES.md`](docs/TYPECLASSES.md) — typeclass pattern explained.
-- [`docs/ALGEBRA.md`](docs/ALGEBRA.md) — algebraic structures introduced in 0.2.
-- [`docs/IMPLEMENTATION_TASKS.md`](docs/IMPLEMENTATION_TASKS.md) — implementation sequence for 0.2.
-- [`docs/ROADMAP.md`](docs/ROADMAP.md) — planned evolution toward laws, ADTs, HKT and higher abstractions.
-- [`CHANGELOG.md`](CHANGELOG.md) — version history.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- [`docs/TYPECLASSES.md`](docs/TYPECLASSES.md)
+- [`docs/ALGEBRA.md`](docs/ALGEBRA.md)
+- [`docs/LAWS.md`](docs/LAWS.md)
+- [`docs/ROADMAP.md`](docs/ROADMAP.md)
+- [`CHANGELOG.md`](CHANGELOG.md)
 
-## Next milestone
+## Out of scope for 0.3
 
-Milestone **0.3** will focus on typeclass laws and property-based testing:
+The following are deliberately deferred:
 
-- `Eq` laws;
-- `Ord` laws;
-- `Semigroup` associativity;
-- `Monoid` associativity and identity;
-- reusable law-test harness;
-- jqwik property tests.
+- `Option`, `Either`, `Validated`;
+- higher-kinded type encoding;
+- `Functor`, `Applicative`, `Monad`;
+- instance registry / `summon`;
+- reflection-based resolution;
+- annotation processing and automatic derivation.
+
+These belong to later milestones after the basic algebra has a trustworthy law-tested foundation.
 
 ## License
 
-Apache License 2.0. See [`LICENSE`](LICENSE).
+Apache License 2.0.
