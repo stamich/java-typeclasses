@@ -52,3 +52,20 @@ This is a major difference from encoding behavior directly through inheritance o
 ## Current limitation
 
 Java has no native higher-kinded types. Milestone 0.3 intentionally does not attempt to solve that problem yet. HKT encoding is planned only after the first-order algebra and laws are stable.
+
+## Compositional instances in milestone 0.4
+
+Milestone 0.4 adds the first instance constructors whose output type depends on another typeclass instance.
+
+For example:
+
+```java
+Eq<Option<Integer>> optionEq =
+        OptionInstances.eq(IntegerInstances.EQ);
+```
+
+The important idea is that the project does not need to modify `Option` to give it equality semantics. Instead, equality for `Option<A>` is derived from equality for `A`.
+
+The same pattern is used for `Either<L,R>` and `Validated<E,A>`.
+
+This is a stepping stone toward higher-kinded abstractions, but it remains ordinary Java generics in milestone 0.4.
