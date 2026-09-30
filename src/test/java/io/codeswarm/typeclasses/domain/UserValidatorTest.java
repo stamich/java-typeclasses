@@ -16,7 +16,7 @@ class UserValidatorTest {
     void shouldCreateValidUser() {
         final var result = UserValidator.validate("user-1", "Alice", 42);
         assertTrue(result.isValid());
-        assertEquals("user-1", result.fold(_ -> "bad", user -> user.id().value()));
+        assertEquals("user-1", result.fold(errors -> "bad", user -> user.id().value()));
     }
 
     /** Verifies accumulation of independent validation failures. */
