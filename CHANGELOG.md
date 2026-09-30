@@ -1,101 +1,79 @@
 # Changelog
 
-All notable changes to the project are documented in this file.
+All notable changes to this educational project are documented here.
 
-## 0.3.0 — Typeclass Laws and Property-Based Testing
+## 0.4.0
 
 ### Added
 
-- Reusable test-scope `EqLaws`, `OrdLaws`, `SemigroupLaws`, and `MonoidLaws`.
-- jqwik 1.10.1 for property-based testing on the JUnit Platform.
-- Property suites for Integer, String, LocalDate, List, and Person instances.
-- Custom jqwik generators for dates, immutable lists, and `Person`.
-- `UnlawfulInstancesTest`, demonstrating that integer subtraction implements the Java shape of a semigroup but violates associativity.
-- `docs/LAWS.md` explaining executable algebraic contracts and property-based verification.
-- Detailed milestone 0.3 implementation task list.
+- sealed `Option<A>` ADT with `Some<A>` and `None<A>`,
+- sealed `Either<L,R>` ADT with `Left<L,R>` and `Right<L,R>`,
+- sealed `Validated<E,A>` ADT with `Valid<E,A>` and `Invalid<E,A>`,
+- minimal ADT operations (`map`, `fold` and branch helpers),
+- safe factories for all ADTs,
+- non-empty immutable error invariant for `Invalid`,
+- `OptionInstances` with derived `Eq` and `Show`,
+- `EitherInstances` with derived `Eq` and `Show`,
+- `ValidatedInstances` with derived `Eq` and `Show`,
+- unit tests for all ADTs and compositional instance factories,
+- jqwik properties validating `Eq` laws for composed ADT instances,
+- `AdtExample`,
+- `docs/ADT.md`,
+- extended roadmap covering HKT, higher-kinded typeclasses, effects and Tagless Final.
 
 ### Changed
 
-- Project version advanced from `0.2.0` to `0.3.0`.
-- `PersonInstances` names now include their typeclass family: `SHOW_COMPACT`, `SHOW_VERBOSE`, `EQ_ALL_FIELDS`, `EQ_NAME`, `ORD_AGE`, and `ORD_NAME`.
-- Existing examples and unit tests were updated for the normalized instance names.
-- README, architecture, algebra, typeclass documentation and roadmap now describe executable laws.
-- `Semigroup` Javadoc no longer describes law verification as future work.
+- project version updated from `0.3.0` to `0.4.0`,
+- project description updated to include ADTs and compositional instances,
+- README expanded with ADT examples and the post-0.4 roadmap,
+- architecture documentation updated with the data layer and composed-instance flow,
+- laws documentation extended to cover ADT equality properties,
+- implementation task list rewritten for milestone 0.4.
 
-### Removed
+### Removed / intentionally omitted
 
-- Ambiguous pre-0.3 `PersonInstances` constant names. No deprecated aliases were retained because the API is still pre-1.0.
-- Stale milestone-0.2 documentation describing property-based law verification as future work.
-- No generated build output, IDE state, obsolete scripts or unused compatibility shims are included.
+- generated build output and temporary compilation files are not part of the milestone artifact,
+- no obsolete helper scripts are retained,
+- no compatibility aliases are added for pre-1.0 APIs,
+- no Tagless Final code is introduced yet,
+- no HKT encoding is introduced yet,
+- no `Functor`, `Applicative` or `Monad` is introduced yet,
+- no generic validation accumulation API is introduced before `Applicative` exists.
 
 ### Design notes
 
-- Law helpers remain under `src/test` and therefore do not expand the production API.
-- Laws compare algebraic results using explicit `Eq` instances rather than `Objects.equals`.
-- Focused unit tests are retained alongside property tests; the two test styles serve complementary purposes.
-- jqwik is test-only and does not leak into production dependencies.
-- ADTs, HKT, `Functor`, `Applicative`, `Monad`, registries and automatic derivation remain outside milestone 0.3.
+- ADTs are modeled with Java 21 sealed interfaces and records,
+- variants reject invalid null state where appropriate,
+- `Invalid` enforces at least one validation error,
+- typeclass instances remain external to represented data types,
+- composed instances receive their dependencies explicitly,
+- law helpers remain test-only infrastructure,
+- the project continues to follow SOLID, KISS, DRY and YAGNI.
 
-## 0.2.0 — Basic Algebraic Typeclasses
-
-### Added
-
-- `Eq<A>` with derived inequality support.
-- `Ord<A>` extending `Eq<A>` with comparison, ordering predicates, minimum and maximum.
-- `Semigroup<A>` representing associative combination.
-- `Monoid<A>` extending `Semigroup<A>` with an identity element.
-- Dedicated `ShowFunctions`, `EqFunctions`, `OrdFunctions`, `SemigroupFunctions`, and `MonoidFunctions` syntax helpers.
-- Integer equality, ordering, addition monoid and multiplication monoid.
-- String equality, case-sensitive and case-insensitive ordering, and concatenation monoid.
-- `LocalDate` equality and chronological ordering.
-- Immutable-style generic list concatenation monoid.
-- Multiple `Eq<Person>` and `Ord<Person>` instances.
-- Executable examples for equality, ordering, semigroup and monoid usage.
-- Focused tests for all new typeclasses, syntax helpers and instance families.
-- `docs/ALGEBRA.md`.
-- Detailed milestone 0.2 implementation task list.
-
-### Changed
-
-- Project version advanced from `0.1.1` to `0.2.0`.
-- Generic helper architecture changed from one growing `TypeClassFunctions` class to one small syntax class per typeclass family.
-- `ShowExample` now uses `ShowFunctions`.
-- README now documents the complete basic algebra model and multiple-instance examples.
-- Architecture, typeclass documentation and roadmap were updated for milestone 0.2.
-- CI verification now runs `clean check javadoc` for Java 21, 25 and 27.
-
-### Removed
-
-- `TypeClassFunctions`, superseded by focused syntax helpers.
-- The old aggregated tests from 0.1.1 that were replaced by smaller type-specific test classes.
-- No obsolete pre-hardening scripts, generated build output or IDE files are included in the source distribution.
-
-### Design notes
-
-- Domain types remain unaware of their typeclass instances.
-- Instance selection remains explicit; no registry, reflection or automatic resolution was introduced.
-- `Ord<A>` refines `Eq<A>` and `Monoid<A>` refines `Semigroup<A>`.
-- Algebraic laws were documented in 0.2 and are executable from milestone 0.3 onward.
-- HKT, ADTs, `Functor`, `Applicative` and `Monad` remain out of scope for YAGNI reasons.
-
-## 0.1.1 — Foundation Hardening
+## 0.3.0
 
 ### Added
 
-- Java 21 toolchain baseline.
-- `Show<A>` as the minimal typeclass example.
-- Explicit dictionary-passing helper.
-- Standard Show instances for Integer, String and LocalDate.
-- Person example with compact and verbose rendering instances.
-- Unit tests, JaCoCo reporting, Javadoc generation and GitHub Actions CI.
-- Architecture, typeclass, roadmap and implementation documentation.
-- Apache License 2.0.
+- executable laws for `Eq`, `Ord`, `Semigroup` and `Monoid`,
+- jqwik property-based testing,
+- lawful-instance property suites,
+- intentionally unlawful semigroup example.
+
+## 0.2.0
+
+### Added
+
+- `Eq<A>`, `Ord<A>`, `Semigroup<A>` and `Monoid<A>`,
+- standard typeclass instances,
+- dedicated syntax helpers.
+
+## 0.1.1
 
 ### Changed
 
-- Reorganized the original prototype into coherent `core`, `instances` and `examples` packages.
-- Replaced the placeholder GitLab README with project-specific documentation.
+- hardened and documented the initial proof of concept,
+- introduced the explicit `Show<A>` model and dictionary passing.
 
-## 0.1 — Original Prototype
+## 0.1
 
-Initial repository state, subsequently treated as milestone 0.1.
+Initial proof of concept.

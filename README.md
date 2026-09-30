@@ -1,164 +1,46 @@
 # Java Typeclasses
 
-Educational implementation of typeclass-oriented functional programming in modern Java.
+An educational implementation of typeclass-oriented functional programming in modern Java.
 
-Milestone **0.3.0** builds on the algebra introduced in 0.2 and adds **executable typeclass laws** verified with property-based tests.
+Milestone **0.4.0** extends the algebra and executable laws introduced in earlier releases with algebraic data types (ADTs) and compositional typeclass instances.
 
 ## Goals
 
-The project demonstrates how typeclass-style polymorphism can be expressed in Java while keeping domain models independent from behavior policies. It deliberately favors explicit mechanics over framework magic.
+The project demonstrates how concepts commonly associated with Scala, Cats and Haskell can be represented explicitly in Java while keeping the implementation small and understandable.
 
-Core design principles:
+The project currently covers:
 
-- **SOLID** — small abstractions with focused responsibilities;
-- **KISS** — explicit instance passing instead of hidden resolution;
-- **DRY** — reusable law helpers remove duplicated test logic;
-- **YAGNI** — no HKT encoding, registry, reflection, annotations, `Functor` or `Monad` yet;
-- **immutability by default** — examples and collection instances do not mutate caller-owned data.
+- explicit typeclass instances,
+- dictionary passing,
+- multiple instances for the same domain type,
+- `Eq`, `Ord`, `Show`, `Semigroup` and `Monoid`,
+- executable algebraic laws,
+- property-based testing with jqwik,
+- sealed algebraic data types,
+- composition of typeclass instances.
+
+The project deliberately does **not** yet introduce higher-kinded type encoding, `Functor`, `Applicative`, `Monad`, effect types or Tagless Final.
 
 ## Requirements
 
-- Java 21 or newer;
-- Gradle 9.8.0 when regenerating/running the wrapper;
-- JUnit 6.1.2;
-- jqwik 1.10.1 for property-based testing.
+- Java 21 or newer,
+- Gradle 9.8.0 through the project wrapper configuration.
 
-## Typeclasses implemented
+CI is intended to verify the project on Java 21, 25 and 27.
 
-```text
-Show<A>
+## Build
 
-Eq<A>
-  ▲
-  │
-Ord<A>
-
-Semigroup<A>
-      ▲
-      │
-  Monoid<A>
+```bash
+./gradlew clean check
 ```
 
-`Show` is independent. `Ord` refines `Eq`; `Monoid` refines `Semigroup`.
+Generate Javadoc:
 
-## Why laws matter
-
-Implementing an interface is not enough to create a valid algebraic instance. A `Semigroup<A>` must be associative, and a `Monoid<A>` must additionally have a left and right identity. Likewise, equality and ordering instances must satisfy their corresponding laws.
-
-Milestone 0.3 verifies these properties systematically using reusable law functions and jqwik-generated values.
-
-Examples:
-
-```text
-Eq:
-  reflexivity
-  symmetry
-  transitivity
-
-Ord:
-  reflexivity
-  sign antisymmetry
-  transitivity
-  equality consistency
-
-Semigroup:
-  associativity
-
-Monoid:
-  associativity
-  left identity
-  right identity
+```bash
+./gradlew javadoc
 ```
 
-See [`docs/LAWS.md`](docs/LAWS.md) for details.
-
-## Explicit instances
-
-Domain types do not implement their typeclasses:
-
-```java
-public record Person(String name, int age) {
-}
-```
-
-Instead, behavior is external:
-
-```java
-public static final Eq<Person> EQ_ALL_FIELDS =
-        (left, right) -> left.name().equals(right.name())
-                && left.age() == right.age();
-
-public static final Eq<Person> EQ_NAME =
-        (left, right) -> left.name().equalsIgnoreCase(right.name());
-```
-
-This allows several valid interpretations for the same domain type.
-
-## Multiple lawful monoids for the same Java type
-
-`Integer` has two useful monoids:
-
-```java
-IntegerInstances.ADDITION
-IntegerInstances.MULTIPLICATION
-```
-
-The same algorithm can therefore produce different results solely through the supplied instance:
-
-```java
-var numbers = List.of(1, 2, 3, 4);
-
-var sum = MonoidFunctions.combineAll(numbers, IntegerInstances.ADDITION);
-var product = MonoidFunctions.combineAll(numbers, IntegerInstances.MULTIPLICATION);
-```
-
-Results:
-
-```text
-10
-24
-```
-
-## Property-based law verification
-
-A reusable law is independent from any specific instance:
-
-```java
-public static <A> boolean associative(
-        A first,
-        A second,
-        A third,
-        Semigroup<A> semigroup,
-        Eq<? super A> eq) {
-
-    var left = semigroup.combine(semigroup.combine(first, second), third);
-    var right = semigroup.combine(first, semigroup.combine(second, third));
-
-    return eq.eqv(left, right);
-}
-```
-
-jqwik then generates many values:
-
-```java
-@Property
-void additionIsALawfulMonoid(
-        @ForAll int first,
-        @ForAll int second,
-        @ForAll int third) {
-
-    assertTrue(MonoidLaws.associative(
-            first,
-            second,
-            third,
-            IntegerInstances.ADDITION,
-            IntegerInstances.EQ));
-}
-```
-
-The tests also contain an intentionally unlawful subtraction semigroup to demonstrate that merely satisfying the Java interface is not sufficient.
-
-## Packages
+## Project structure
 
 ```text
 src/main/java/io/codeswarm/typeclasses/
@@ -169,78 +51,196 @@ src/main/java/io/codeswarm/typeclasses/
 │   ├── Eq.java
 │   ├── Ord.java
 │   └── Show.java
+├── data/
+│   ├── Either.java
+│   ├── Invalid.java
+│   ├── Left.java
+│   ├── None.java
+│   ├── Option.java
+│   ├── Right.java
+│   ├── Some.java
+│   ├── Valid.java
+│   └── Validated.java
 ├── examples/
-│   ├── Person.java
-│   ├── PersonInstances.java
-│   └── ...
 ├── instances/
-│   ├── IntegerInstances.java
-│   ├── ListInstances.java
-│   ├── LocalDateInstances.java
-│   └── StringInstances.java
 └── syntax/
-    ├── EqFunctions.java
-    ├── MonoidFunctions.java
-    ├── OrdFunctions.java
-    ├── SemigroupFunctions.java
-    └── ShowFunctions.java
-
-src/test/java/io/codeswarm/typeclasses/
-├── laws/
-│   ├── EqLaws.java
-│   ├── MonoidLaws.java
-│   ├── OrdLaws.java
-│   ├── SemigroupLaws.java
-│   └── UnlawfulInstancesTest.java
-├── properties/
-│   ├── IntegerInstancesProperties.java
-│   ├── ListInstancesProperties.java
-│   ├── LocalDateInstancesProperties.java
-│   ├── PersonInstancesProperties.java
-│   └── StringInstancesProperties.java
-└── ... existing focused unit tests
 ```
 
-The law framework intentionally lives under `src/test`. It validates this project but is not yet committed as public production API.
+Reusable law helpers remain test infrastructure:
 
-## Build
-
-```bash
-./gradlew clean check javadoc
+```text
+src/test/java/io/codeswarm/typeclasses/laws/
 ```
 
-`check` runs both normal JUnit tests and jqwik properties through the JUnit Platform.
+This keeps the production API focused while the project is still pre-1.0.
 
-## CI
+## Basic typeclass example
 
-GitHub Actions validates Java 21, 25 and 27 with:
+```java
+Eq<Integer> integerEq = IntegerInstances.EQ;
+boolean same = integerEq.eqv(42, 42);
+```
 
-```bash
-./gradlew clean check javadoc
+Typeclass behavior remains separate from the represented type. A domain object does not have to implement the typeclass interface.
+
+## Algebraic data types
+
+### Option
+
+`Option<A>` models presence or absence without exposing `null` as part of normal program flow.
+
+```java
+Option<Integer> result =
+        Option.some(21)
+                .map(value -> value * 2);
+```
+
+The ADT is sealed and has two variants:
+
+```text
+Option<A>
+├── Some<A>
+└── None<A>
+```
+
+### Either
+
+`Either<L,R>` models two alternatives and is right-biased for `map`.
+
+```java
+Either<String, Integer> result =
+        Either.<String, Integer>right(21)
+                .map(value -> value * 2);
+```
+
+```text
+Either<L,R>
+├── Left<L,R>
+└── Right<L,R>
+```
+
+### Validated
+
+`Validated<E,A>` models a successful value or one or more validation errors.
+
+```java
+Validated<String, Integer> result =
+        Validated.invalid(
+                List.of("name is empty", "age is negative"));
+```
+
+```text
+Validated<E,A>
+├── Valid<E,A>
+└── Invalid<E,A>
+```
+
+Milestone 0.4 stores multiple errors in `Invalid`, but intentionally does not yet define generic Applicative-based error accumulation. That belongs after `Applicative` exists in the typeclass hierarchy.
+
+## Compositional instances
+
+A major addition in 0.4 is the ability to derive a typeclass instance for a structured type from instances for its elements.
+
+For example:
+
+```java
+Eq<Option<Integer>> optionEq =
+        OptionInstances.eq(IntegerInstances.EQ);
+```
+
+Conceptually:
+
+```text
+Eq<A>
+  │
+  ▼
+Eq<Option<A>>
+```
+
+The same idea is implemented for `Either` and `Validated`:
+
+```java
+Eq<Either<String, Integer>> eitherEq =
+        EitherInstances.eq(
+                StringInstances.EQ,
+                IntegerInstances.EQ);
+```
+
+and:
+
+```java
+Show<Validated<String, Integer>> validatedShow =
+        ValidatedInstances.show(
+                StringInstances.SHOW,
+                IntegerInstances.SHOW);
+```
+
+This is an important bridge between simple typeclasses and the higher-kinded abstractions planned for later milestones.
+
+## Algebraic laws
+
+A Java implementation matching an interface is not automatically a lawful instance of the algebraic abstraction it represents.
+
+Milestone 0.3 introduced executable laws for:
+
+- `Eq`,
+- `Ord`,
+- `Semigroup`,
+- `Monoid`.
+
+Milestone 0.4 extends property testing to composed ADT equality instances. For example, if `Eq<Integer>` is lawful, `OptionInstances.eq(IntegerInstances.EQ)` is verified against the `Eq` laws as well.
+
+See [docs/LAWS.md](docs/LAWS.md).
+
+## Design principles
+
+The project applies the following principles deliberately:
+
+- **SRP** — ADTs, typeclasses, instances, syntax helpers and laws have separate responsibilities.
+- **OCP** — new instances can be added without modifying represented domain types.
+- **DIP** — generic algorithms depend on typeclass interfaces, not concrete policies.
+- **KISS** — each ADT exposes only operations needed by the current milestone.
+- **DRY** — compositional instance logic is centralized in dedicated instance factories.
+- **YAGNI** — no HKT encoding, Monad, effect runtime or Tagless Final is introduced before the required foundations exist.
+
+## Example
+
+Run `AdtExample` from the IDE or compile and execute it manually. It demonstrates `Option`, `Either`, `Validated` and derived `Show` instances.
+
+Expected output:
+
+```text
+Some(42)
+Right(42)
+Invalid([name is empty, age is negative])
 ```
 
 ## Documentation
 
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-- [`docs/TYPECLASSES.md`](docs/TYPECLASSES.md)
-- [`docs/ALGEBRA.md`](docs/ALGEBRA.md)
-- [`docs/LAWS.md`](docs/LAWS.md)
-- [`docs/ROADMAP.md`](docs/ROADMAP.md)
-- [`CHANGELOG.md`](CHANGELOG.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Typeclasses](docs/TYPECLASSES.md)
+- [Algebra](docs/ALGEBRA.md)
+- [Algebraic laws](docs/LAWS.md)
+- [Algebraic data types](docs/ADT.md)
+- [Implementation tasks](docs/IMPLEMENTATION_TASKS.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Changelog](CHANGELOG.md)
 
-## Out of scope for 0.3
+## Roadmap
 
-The following are deliberately deferred:
+The planned sequence after 0.4 is:
 
-- `Option`, `Either`, `Validated`;
-- higher-kinded type encoding;
-- `Functor`, `Applicative`, `Monad`;
-- instance registry / `summon`;
-- reflection-based resolution;
-- annotation processing and automatic derivation.
+```text
+0.5  Higher-kinded type encoding: Kind<F,A>
+0.6  Functor / Applicative / Monad
+0.7  Effect types and natural transformations
+0.8  Tagless Final with an effect parameter F
+0.9  Derivation / instance-resolution experiments and API hardening
+1.0  Stable educational release
+```
 
-These belong to later milestones after the basic algebra has a trustworthy law-tested foundation.
+Tagless Final is intentionally delayed until the project can express an effect constructor and the typeclasses needed to program over it meaningfully.
 
 ## License
 
-Apache License 2.0.
+Apache License 2.0. See [LICENSE](LICENSE).

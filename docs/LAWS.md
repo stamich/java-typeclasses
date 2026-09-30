@@ -94,3 +94,15 @@ Integer subtraction is not associative:
 Milestone 0.3 uses laws as internal verification infrastructure. Publishing them as production API would create a compatibility commitment before the project has enough experience with their shape.
 
 A future milestone may extract them into a dedicated module if users need reusable law suites.
+
+## ADT equality laws in milestone 0.4
+
+The law helpers introduced in 0.3 are reused to verify composed equality instances for `Option`, `Either` and `Validated`.
+
+The project checks the same `Eq` laws:
+
+- reflexivity,
+- symmetry,
+- transitivity.
+
+This demonstrates an important principle: composing an instance should preserve the algebraic contract when the component instances are lawful.

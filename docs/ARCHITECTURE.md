@@ -1,114 +1,105 @@
-# Architecture — Milestone 0.3
+# Architecture
 
 ## Overview
 
-Milestone 0.3 preserves the small production architecture from 0.2 and adds a separate verification layer in test scope.
+Milestone 0.4 keeps the project deliberately small and explicit. The production code is divided by responsibility:
 
 ```text
-                     Domain types
-                         │
-                         │ described by
-                         ▼
-              ┌─────────────────────┐
-              │     Typeclasses     │
-              │                     │
-              │ Show<A>             │
-              │ Eq<A> <- Ord<A>     │
-              │ Semigroup<A>        │
-              │     ^               │
-              │     │               │
-              │ Monoid<A>           │
-              └─────────┬───────────┘
-                        │ implemented as explicit values
-                        ▼
-                    Instances
-                        │
-                        │ exercised by
-              ┌─────────▼───────────┐
-              │ Syntax / algorithms │
-              └─────────────────────┘
-
-Test verification layer:
-
-Instances + generated values
-            │
-            ▼
-      reusable Laws
-            │
-            ▼
-    jqwik properties
+core/       basic typeclass contracts
+algebra/    algebraic typeclasses
+syntax/     generic helper functions
+instances/  concrete and compositional instances
+data/       algebraic data types
+examples/   executable educational examples
 ```
 
-## Production packages
+Reusable law definitions remain test infrastructure under `src/test/java/.../laws`.
 
-### `core`
-
-Defines non-algebraic/general typeclasses: `Show`, `Eq`, and `Ord`.
-
-### `algebra`
-
-Defines `Semigroup` and `Monoid`.
-
-### `instances`
-
-Contains reusable instances for JDK types.
-
-### `examples`
-
-Contains the `Person` record, its external instances and executable examples.
-
-### `syntax`
-
-Contains small generic algorithms grouped by typeclass family. This avoids a growing utility god class.
-
-## Test packages
-
-### `laws`
-
-Contains reusable executable laws. They are deliberately test infrastructure rather than production API.
-
-### `properties`
-
-Contains jqwik property suites applying the laws to concrete instances.
-
-### existing focused unit-test packages
-
-Retain example-based tests for direct behavior, edge cases and readability.
-
-## Dependency direction
-
-Production code never depends on test laws or jqwik:
+## Core relationships
 
 ```text
-core/algebra <- instances/examples/syntax
+Show<A>
+Eq<A> <--- Ord<A>
 
-production code
-     ▲
-     │ tested by
-laws + properties + JUnit tests
+Semigroup<A> <--- Monoid<A>
 ```
+
+Domain and data types do not implement these interfaces. Typeclass instances are separate values.
+
+## ADT layer
+
+```text
+Option<A>
+├── Some<A>
+└── None<A>
+
+Either<L,R>
+├── Left<L,R>
+└── Right<L,R>
+
+Validated<E,A>
+├── Valid<E,A>
+└── Invalid<E,A>
+```
+
+The sealed hierarchy makes variants exhaustive and explicit.
+
+## Compositional instances
+
+Milestone 0.4 introduces instance factories that depend on component instances:
+
+```text
+Eq<A> ----------------------> Eq<Option<A>>
+Show<A> --------------------> Show<Option<A>>
+
+Eq<L> + Eq<R> -------------> Eq<Either<L,R>>
+Show<L> + Show<R> ---------> Show<Either<L,R>>
+
+Eq<E> + Eq<A> -------------> Eq<Validated<E,A>>
+Show<E> + Show<A> ---------> Show<Validated<E,A>>
+```
+
+This dependency is explicit through method parameters; there is no global registry or implicit resolution mechanism.
 
 ## SOLID / KISS / DRY / YAGNI
 
-- **SRP:** each typeclass, syntax helper, law family and property suite has one purpose.
-- **OCP:** new instances can be added without modifying domain models or generic algorithms.
-- **DIP:** generic algorithms and laws depend on abstractions such as `Eq` and `Semigroup`.
-- **KISS:** instance passing remains explicit; no resolver or reflection is introduced.
-- **DRY:** algebraic laws are encoded once and reused by many property suites.
-- **YAGNI:** law helpers remain test-only until there is a demonstrated need to publish them.
+### SRP
 
-## Naming rule for instance constants
+- ADTs model data alternatives.
+- typeclasses describe capabilities/algebra.
+- instance holders provide concrete interpretations.
+- syntax classes provide reusable generic operations.
+- law helpers verify algebraic contracts.
 
-When one holder exposes several typeclass families, names include the family:
+### OCP
 
-```text
-SHOW_COMPACT
-EQ_NAME
-ORD_AGE
-```
+New instances can be added without modifying the represented ADT or domain type.
 
-This scales better than ambiguous names such as `BY_NAME`.
+### DIP
 
-## Null policy
+Generic code depends on `Eq`, `Show`, `Semigroup`, `Monoid`, etc., not on particular concrete policies.
 
-The project still does not impose one global null policy. Instances are tested with their intended non-null domains. Null-handling semantics may be introduced later only if there is a concrete use case.
+### KISS
+
+ADT APIs expose only operations needed by this milestone.
+
+### DRY
+
+Equality and rendering for structured values are implemented once per ADT in instance factories. Law logic from 0.3 is reused unchanged.
+
+### YAGNI
+
+The milestone intentionally excludes:
+
+- HKT encoding,
+- `Functor`, `Applicative`, `Monad`,
+- generic `flatMap` abstractions,
+- effect types,
+- Tagless Final,
+- reflection-based instance resolution.
+
+These concepts are sequenced later in the roadmap.
+
+## Why Tagless Final is later
+
+Tagless Final becomes substantially more meaningful once Java code can represent an effect constructor `F` using `Kind<F,A>`, define higher-kinded typeclasses and provide effect interpreters. Introducing it before those layers would either hard-code effects or obscure the concept.
