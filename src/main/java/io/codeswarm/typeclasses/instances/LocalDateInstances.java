@@ -10,14 +10,14 @@ import java.time.format.DateTimeFormatter;
 /**
  * Standard typeclass instances for {@link LocalDate} values.
  *
- * <p>This class demonstrates that typeclass behaviour can be supplied for a
+ * <p>This class demonstrates that typeclass behavior can be supplied for a
  * JDK type without modifying or extending that type.</p>
  */
 public final class LocalDateInstances {
 
     /** Renders dates in ISO-8601 local-date format. */
     public static final Show<LocalDate> ISO_SHOW =
-            date -> DateTimeFormatter.ISO_LOCAL_DATE.format(date);
+            DateTimeFormatter.ISO_LOCAL_DATE::format;
 
     /** Compares dates using standard value equality. */
     public static final Eq<LocalDate> EQ = LocalDate::equals;

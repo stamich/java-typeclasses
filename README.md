@@ -27,7 +27,7 @@ Semigroup<A>
   Monoid<A>
 ```
 
-- `Show<A>` — rendering behaviour introduced in 0.1.1.
+- `Show<A>` — rendering behavior introduced in 0.1.1.
 - `Eq<A>` — selectable equality semantics.
 - `Ord<A>` — total ordering that also provides equality.
 - `Semigroup<A>` — associative binary combination.
@@ -54,11 +54,11 @@ public static final Ord<Person> BY_AGE =
         (left, right) -> Integer.compare(left.age(), right.age());
 ```
 
-The same domain value can therefore have several meaningful behaviours without modifying `Person`.
+The same domain value can therefore have several meaningful behaviors without modifying `Person`.
 
 ## Multiple instances for one type
 
-`Integer` demonstrates why typeclass instances are values rather than behaviour embedded in the data type:
+`Integer` demonstrates why typeclass instances are values rather than behavior embedded in the data type:
 
 ```java
 IntegerInstances.ADDITION
@@ -72,7 +72,7 @@ addition        combine = +    empty = 0
 multiplication  combine = *    empty = 1
 ```
 
-A generic algorithm can select behaviour explicitly:
+A generic algorithm can select behavior explicitly:
 
 ```java
 var numbers = List.of(1, 2, 3, 4);

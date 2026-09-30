@@ -21,7 +21,7 @@ class MonoidFunctionsTest {
     /** Verifies that an empty iterable evaluates to the selected identity. */
     @Test
     void shouldReturnIdentityForEmptyIterable() {
-        assertEquals(0, MonoidFunctions.combineAll(List.<Integer>of(), IntegerInstances.ADDITION));
-        assertEquals(1, MonoidFunctions.combineAll(List.<Integer>of(), IntegerInstances.MULTIPLICATION));
+        assertEquals(0, MonoidFunctions.combineAll(List.of(), IntegerInstances.ADDITION));
+        assertEquals(1, MonoidFunctions.combineAll(List.of(), IntegerInstances.MULTIPLICATION));
     }
 }
