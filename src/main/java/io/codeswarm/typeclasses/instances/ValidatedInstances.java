@@ -2,9 +2,9 @@ package io.codeswarm.typeclasses.instances;
 
 import io.codeswarm.typeclasses.core.Eq;
 import io.codeswarm.typeclasses.core.Show;
+import io.codeswarm.typeclasses.data.NonEmptyList;
 import io.codeswarm.typeclasses.data.Validated;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -33,7 +33,7 @@ public final class ValidatedInstances {
         Objects.requireNonNull(eqA, "eqA");
         return (left, right) -> left.fold(
                 leftErrors -> right.fold(
-                        rightErrors -> equalLists(leftErrors, rightErrors, eqE),
+                        rightErrors -> equalNonEmptyLists(leftErrors, rightErrors, eqE),
                         ignored -> false),
                 leftValue -> right.fold(
                         ignored -> false,
@@ -55,13 +55,13 @@ public final class ValidatedInstances {
         Objects.requireNonNull(showE, "showE");
         Objects.requireNonNull(showA, "showA");
         return validated -> validated.fold(
-                errors -> "Invalid(" + errors.stream().map(showE::show).toList() + ")",
+                errors -> "Invalid(" + errors.toList().stream().map(showE::show).toList() + ")",
                 value -> "Valid(" + showA.show(value) + ")");
     }
 
-    private static <E> boolean equalLists(
-            final List<E> left,
-            final List<E> right,
+    private static <E> boolean equalNonEmptyLists(
+            final NonEmptyList<E> left,
+            final NonEmptyList<E> right,
             final Eq<? super E> eqE) {
         if (left.size() != right.size()) {
             return false;

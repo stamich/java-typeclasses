@@ -23,6 +23,6 @@ class SemigroupFunctionsTest {
     @Test
     void shouldRejectEmptyIterable() {
         assertThrows(IllegalArgumentException.class,
-                () -> SemigroupFunctions.combineAll(List.of(), MAXIMUM));
+                () -> SemigroupFunctions.combineAll(List.<Integer>of(), MAXIMUM));
     }
 }

@@ -5,7 +5,7 @@ package io.codeswarm.typeclasses.core;
  * textual representation.
  *
  * <p>{@code Show} demonstrates the central idea of the typeclass pattern:
- * behavior is defined independently of the domain type. A domain class does
+ * behaviour is defined independently from the domain type. A domain class does
  * not have to implement this interface and more than one {@code Show} instance
  * may exist for the same type.</p>
  *

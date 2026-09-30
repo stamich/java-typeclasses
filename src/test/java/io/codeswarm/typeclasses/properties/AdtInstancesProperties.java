@@ -61,6 +61,6 @@ class AdtInstancesProperties {
     private static Validated<String, Integer> validated(final int value) {
         return value % 2 == 0
                 ? Validated.valid(value)
-                : Validated.invalid(List.of("error-" + value));
+                : Validated.invalid("error-" + value);
     }
 }
