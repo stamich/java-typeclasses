@@ -10,7 +10,7 @@ public final class ValidatedUserExample {
     }
 
     /** Runs valid and invalid user-validation examples. */
-    public static void main(final String[] args) {
+    static void main() {
         System.out.println(UserValidator.validate("user-1", "Alice", 42));
         System.out.println(UserValidator.validate("", "", -10));
     }

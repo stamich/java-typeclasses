@@ -4,7 +4,6 @@ import io.codeswarm.typeclasses.core.Eq;
 import io.codeswarm.typeclasses.core.Show;
 import io.codeswarm.typeclasses.data.None;
 import io.codeswarm.typeclasses.data.Option;
-import io.codeswarm.typeclasses.data.Some;
 import java.util.Objects;
 
 /**

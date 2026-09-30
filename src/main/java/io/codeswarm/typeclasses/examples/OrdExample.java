@@ -12,9 +12,8 @@ public final class OrdExample {
     /**
      * Runs the ordering example.
      *
-     * @param args command-line arguments; ignored
      */
-    public static void main(final String[] args) {
+    static void main() {
         final var alice = new Person("Alice", 35);
         final var bob = new Person("Bob", 27);
         System.out.println(OrdFunctions.min(alice, bob, PersonInstances.ORD_AGE));

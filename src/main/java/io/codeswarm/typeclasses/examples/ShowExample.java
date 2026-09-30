@@ -16,9 +16,8 @@ public final class ShowExample {
     /**
      * Runs the show example.
      *
-     * @param args command-line arguments; ignored
      */
-    public static void main(final String[] args) {
+    static void main() {
         final var person = new Person("Alice", 30);
         System.out.println(ShowFunctions.show(person, PersonInstances.SHOW_COMPACT));
         System.out.println(ShowFunctions.show(person, PersonInstances.SHOW_VERBOSE));

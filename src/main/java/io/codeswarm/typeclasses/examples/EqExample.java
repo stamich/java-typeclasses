@@ -12,9 +12,8 @@ public final class EqExample {
     /**
      * Runs the equality example.
      *
-     * @param args command-line arguments; ignored
      */
-    public static void main(final String[] args) {
+    static void main() {
         final var alice30 = new Person("Alice", 30);
         final var alice40 = new Person("ALICE", 40);
         System.out.println(EqFunctions.equal(alice30, alice40, PersonInstances.EQ_ALL_FIELDS));

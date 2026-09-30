@@ -15,9 +15,8 @@ public final class MonoidExample {
     /**
      * Runs the monoid example.
      *
-     * @param args command-line arguments; ignored
      */
-    public static void main(final String[] args) {
+    static void main() {
         final var numbers = List.of(1, 2, 3, 4);
         System.out.println(MonoidFunctions.combineAll(numbers, IntegerInstances.ADDITION));
         System.out.println(MonoidFunctions.combineAll(numbers, IntegerInstances.MULTIPLICATION));

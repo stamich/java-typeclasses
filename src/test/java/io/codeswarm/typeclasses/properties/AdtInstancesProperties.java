@@ -9,7 +9,6 @@ import io.codeswarm.typeclasses.instances.OptionInstances;
 import io.codeswarm.typeclasses.instances.StringInstances;
 import io.codeswarm.typeclasses.instances.ValidatedInstances;
 import io.codeswarm.typeclasses.laws.EqLaws;
-import java.util.List;
 import net.jqwik.api.ForAll;
 import net.jqwik.api.Property;
 
