@@ -1,78 +1,73 @@
 # Roadmap
 
-The roadmap is incremental. Each milestone should remain buildable, documented, and understandable on its own.
+## 0.1 — Original prototype
 
-## 0.1 — Original proof of concept
-
-Initial experiments with typeclass-oriented functional programming in Java.
+Initial experiment proving that the typeclass pattern can be represented in Java.
 
 ## 0.1.1 — Foundation hardening
 
-- Java 21 baseline;
-- modern Gradle build;
-- clear package structure;
-- explicit `Show<A>` typeclass;
+- modern build baseline;
+- `Show<A>`;
 - explicit dictionary passing;
-- standard and domain-specific instances;
-- multiple instances for one domain type;
-- JUnit tests;
-- JaCoCo and Javadoc;
-- GitHub Actions CI;
-- architecture, typeclass, roadmap, and changelog documentation.
+- external instances;
+- clean package boundaries;
+- tests, CI and documentation.
 
-## 0.2 — Basic algebraic typeclasses
-
-Planned:
+## 0.2 — Basic algebraic typeclasses — current
 
 - `Eq<A>`;
 - `Ord<A>`;
 - `Semigroup<A>`;
 - `Monoid<A>`;
-- standard instances for selected JDK types;
-- reusable generic algorithms consuming those instances.
+- multiple instances for the same type;
+- immutable list concatenation;
+- dedicated syntax helpers;
+- algebra documentation.
 
 ## 0.3 — Typeclass laws
 
 Planned:
 
-- reusable law definitions;
-- property-based testing;
-- associativity, identity, equality, and ordering laws;
-- jqwik-based test support.
+- reusable `EqLaws`, `OrdLaws`, `SemigroupLaws`, `MonoidLaws`;
+- jqwik property-based testing;
+- associativity, identity, reflexivity, symmetry, transitivity and ordering properties;
+- lawful-instance test harness.
 
 ## 0.4 — Algebraic data types
 
 Planned:
 
-- `Option<A>`;
-- `Either<L, R>`;
-- `Validated<E, A>`;
-- Java records, sealed interfaces, and pattern matching.
+- `Option`;
+- `Either`;
+- `Validated`;
+- sealed interfaces and records;
+- typeclass instances for the ADTs.
 
 ## 0.5 — Higher-kinded type encoding
 
 Planned:
 
-- `Kind<F, A>` or equivalent witness encoding;
-- safe inject/project boundaries;
-- documentation of Java type-system limitations.
+- `Kind<F, A>`;
+- witness types;
+- safe conversion conventions;
+- documentation of Java's HKT limitation.
 
-## 0.6 — Functor / Applicative / Monad
+## 0.6 — Functor, Applicative and Monad
 
-Planned higher-order typeclasses based on the 0.5 encoding.
+Planned after HKT encoding is established.
 
-## 0.7 — Foldable / Traverse
+## 0.7 — Foldable and Traverse
 
-Planned structural typeclasses and instances for supported ADTs.
+Planned generic folding and traversal abstractions.
 
 ## 0.8 — Instance resolution experiments
 
-Planned investigation of explicit registries, type tokens, scoping, ambiguity detection, and a `summon`-style API. Explicit dictionary passing remains the reference semantics.
+Possible explicit registry / `summon` experiments, kept outside the fundamental model.
 
 ## 0.9 — Automatic derivation
 
-Planned annotation-processing or source-generation experiments for selected typeclasses such as `Eq` and `Show`.
+Possible annotation-processing based derivation for selected typeclasses.
 
 ## 1.0 — Stable educational release
 
-Planned stable public API, complete documentation, examples, compatibility policy, publishing metadata, and release automation.
+A documented, law-tested API with a deliberate stability promise.

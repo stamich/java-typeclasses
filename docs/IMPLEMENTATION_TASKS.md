@@ -1,139 +1,131 @@
-# Milestone 0.1.1 — implementation tasks
+# Milestone 0.2 — Detailed Implementation Tasks
 
-## Task 1 — Freeze the 0.1 baseline
+## Goal
 
-1. Tag or branch the existing repository as milestone 0.1.
-2. Record the current build command and source tree.
-3. Keep the refactor behaviour-focused: remove legacy files only after confirming they are not referenced.
+Turn the hardened 0.1.1 foundation into the first useful algebraic typeclass release without introducing higher-kinded types or hidden instance resolution.
 
-**Done when:** the original state can be recovered and compared with 0.1.1.
+## Task 1 — Freeze and verify the 0.1.1 baseline
 
-## Task 2 — Clean repository metadata and build configuration
+1. Preserve the 0.1.1 public concepts: `Show<A>`, external instances, explicit dictionary passing, `Person` as an independent domain record.
+2. Remove generated build output before starting.
+3. Use the 0.1.1 source tree as the only migration source; do not restore obsolete scripts or experimental files from pre-hardening revisions.
 
-1. Rename the Gradle root project from the generic `FunctionalJava` name to `java-typeclasses`.
-2. Set `group` to `io.codeswarm` and version to `0.1.1`.
-3. Replace the `java` plugin with `java-library`.
-4. Configure the Java 21 toolchain.
-5. Enable source and Javadoc JAR generation.
-6. Upgrade the wrapper target to Gradle 9.8.0.
-7. Replace the old JUnit BOM with JUnit 6.1.2.
-8. Enable `-Xlint:all`, UTF-8, JaCoCo, and Javadoc verification.
-9. Simplify `.gitignore` and remove obsolete generated/IDE files from version control.
+## Task 2 — Version and build metadata
 
-**Done when:** `clean`, `compileJava`, `test`, `jacocoTestReport`, and `javadoc` are defined by the build.
+1. Change project version from `0.1.1` to `0.2.0`.
+2. Keep Java 21 as the minimum toolchain.
+3. Keep JUnit, JaCoCo, source JAR and Javadoc JAR configuration.
+4. Keep strict compiler warnings with `-Xlint:all`.
+5. Keep CI verification on Java 21, 25 and 27.
 
-## Task 3 — Establish package boundaries
+## Task 3 — Introduce `Eq<A>`
 
-1. Create `io.codeswarm.typeclasses.core` for reusable abstractions.
-2. Create `io.codeswarm.typeclasses.instances` for reusable platform/JDK instances.
-3. Create `io.codeswarm.typeclasses.examples` for educational models and demos.
-4. Mirror the package structure in `src/test/java`.
-5. Remove old default-package or legacy package source files once their behaviour is represented in the new structure.
+1. Add `core/Eq.java`.
+2. Keep the interface functional with only `eqv` as the abstract operation.
+3. Add `neqv` as a derived default method.
+4. Document that equality is selectable and independent from `Object.equals`.
+5. Add focused unit tests.
 
-**Done when:** no production code remains in the default package and dependency direction is core <- instances/examples.
+## Task 4 — Introduce `Ord<A>`
 
-## Task 4 — Implement the minimal typeclass contract
+1. Add `core/Ord.java` extending `Eq<A>`.
+2. Add abstract `compare`.
+3. Derive `eqv`, `lessThan`, `greaterThan`, `min`, and `max` from `compare`.
+4. Avoid extending `Comparator` in this milestone to keep the typeclass model independent and minimal.
+5. Add unit tests for all derived operations.
 
-1. Add `Show<A>` as a `@FunctionalInterface`.
-2. Document its role and its deliberately instance-specific null policy.
-3. Do not add a marker `TypeClass` parent interface; it would provide no behaviour in this milestone.
+## Task 5 — Introduce the algebra package
 
-**Done when:** `Show<A>` contains exactly one abstract operation and no dependency on examples.
+1. Add `algebra/Semigroup.java` with only `combine`.
+2. Document associativity as a law rather than trying to encode it in the Java type system.
+3. Add `algebra/Monoid.java` extending `Semigroup` with `empty`.
+4. Document left and right identity laws.
+5. Add representative unit tests.
 
-## Task 5 — Implement explicit dictionary passing
+## Task 6 — Refactor generic helper functions
 
-1. Add `TypeClassFunctions` as a non-instantiable utility class.
-2. Add `show(A, Show<? super A>)`.
-3. Validate only the required dictionary dependency, not the represented value.
-4. Do not add reflection, registries, `ServiceLoader`, DI, annotations, or hidden lookup.
+1. Remove `core/TypeClassFunctions.java`.
+2. Add `syntax/ShowFunctions.java`.
+3. Add `syntax/EqFunctions.java`.
+4. Add `syntax/OrdFunctions.java`.
+5. Add `syntax/SemigroupFunctions.java`.
+6. Add `syntax/MonoidFunctions.java`.
+7. Give each utility class exactly one typeclass-family responsibility.
+8. Validate required strategy/instance arguments at API boundaries.
+9. Make semigroup folding reject empty input.
+10. Make monoid folding use `empty()` for empty input.
 
-**Done when:** generic rendering depends only on `Show` and a caller-supplied instance.
+## Task 7 — Expand standard instances
 
-## Task 6 — Add standard instances
+### Integer
 
-1. Add `StringInstances.SHOW`.
-2. Add `IntegerInstances.SHOW`.
-3. Add `LocalDateInstances.ISO_SHOW` to prove that third-party/JDK types can receive external behaviour.
-4. Keep each holder focused on a single represented type.
+Add `SHOW`, `EQ`, `ORD`, `ADDITION`, and `MULTIPLICATION`.
 
-**Done when:** standard instances are stateless immutable values and contain no unrelated algorithms.
+### String
 
-## Task 7 — Add an immutable domain example
+Add `SHOW`, `EQ`, `LEXICOGRAPHIC_ORD`, `CASE_INSENSITIVE_ORD`, and `CONCATENATION`.
 
-1. Implement `Person` as a record.
-2. Validate `name` and `age` in the canonical constructor.
-3. Keep `Person` independent from `Show`.
-4. Add `PersonInstances.COMPACT_SHOW`.
-5. Add `PersonInstances.VERBOSE_SHOW`.
+### LocalDate
 
-**Done when:** two `Show<Person>` implementations coexist without changing `Person`.
+Keep `ISO_SHOW` and add `EQ` and chronological `ORD`.
 
-## Task 8 — Add an executable demonstration
+### List
 
-1. Add `ShowExample`.
-2. Demonstrate compact and verbose person rendering.
-3. Demonstrate integer rendering.
-4. Demonstrate `LocalDate` rendering.
-5. Keep the example deterministic and free of external I/O other than stdout.
+Add a generic `concatenation()` monoid factory. Do not mutate input lists; return an immutable copy.
 
-**Done when:** the example produces the four documented output lines.
+## Task 8 — Expand the Person example
 
-## Task 9 — Add unit tests
+1. Keep `Person` free of typeclass interfaces.
+2. Keep `COMPACT_SHOW` and `VERBOSE_SHOW`.
+3. Add `BY_ALL_FIELDS` and case-insensitive `BY_NAME` equality instances.
+4. Add `BY_AGE` and `BY_NAME_ORDER` orderings.
+5. Test that different policies produce different valid results.
 
-1. Test generic delegation in `TypeClassFunctions`.
-2. Test null-dictionary rejection.
-3. Test instance-specific null handling.
-4. Test each standard instance.
-5. Test `Person` invariants.
-6. Test both `Person` instances and their coexistence.
+## Task 9 — Add executable examples
 
-**Done when:** all public milestone behaviour has focused tests and examples are not used as substitutes for assertions.
+1. Migrate `ShowExample` to `ShowFunctions`.
+2. Add `EqExample` showing two equality policies.
+3. Add `OrdExample` showing age and name ordering.
+4. Add `SemigroupExample` showing a non-empty maximum fold.
+5. Add `MonoidExample` showing sum and product from the same `List<Integer>`.
 
-## Task 10 — Add documentation
+## Task 10 — Unit-test the complete milestone API
 
-1. Replace the GitLab template README.
-2. Add `ARCHITECTURE.md` with package boundaries, dependency direction, principles, and null policy.
-3. Add `TYPECLASSES.md` explaining the Java encoding and dictionary passing.
-4. Add `ROADMAP.md` covering 0.1 through 1.0.
-5. Add `IMPLEMENTATION_TASKS.md`.
-6. Add Javadoc to every public type and public member, plus useful documentation on test classes/methods for educational clarity.
+1. Test `Eq` and `Ord` default methods.
+2. Test representative `Semigroup` and `Monoid` behaviour.
+3. Test all syntax helpers and exceptional cases.
+4. Test every standard instance family.
+5. Test `Person` validation and all domain instances.
+6. Do not add fake example-based “law proofs”; reserve property law testing for 0.3.
 
-**Done when:** a new developer can understand the milestone without reading commit history.
+## Task 11 — Javadoc
 
-## Task 11 — Add CI
+1. Document every public type.
+2. Document every public method and public instance field where the intent is not self-evident.
+3. Explain algebraic laws in the relevant interfaces.
+4. Explain the design reason behind external instances and explicit dictionary passing.
 
-1. Add a GitHub Actions workflow.
-2. Test Java 21, 25, and 27.
-3. Run `clean check javadoc`.
-4. Keep workflow permissions read-only unless a future release job needs more.
+## Task 12 — Documentation
 
-**Done when:** pull requests verify compilation, tests, coverage report generation, and Javadoc.
+1. Rewrite README for milestone 0.2.
+2. Update `ARCHITECTURE.md` with type relationships and package boundaries.
+3. Expand `TYPECLASSES.md` with equality, ordering and algebra.
+4. Add `ALGEBRA.md`.
+5. Update `ROADMAP.md` and mark 0.2 as current.
+6. Add a complete 0.2.0 entry to `CHANGELOG.md`.
 
-## Task 12 — Record changes and remove obsolete files
+## Task 13 — Cleanup
 
-1. Add Apache-2.0 `LICENSE`.
-2. Add `CHANGELOG.md` entry for 0.1.1.
-3. Remove the placeholder GitLab README.
-4. Remove unreferenced scripts and generated files from 0.1.
-5. Remove legacy sources superseded by the new package structure.
-6. Do not remove Gradle wrapper scripts/JAR when applying the milestone to the actual repository; regenerate them consistently for 9.8.0.
+1. Delete `TypeClassFunctions` and its old test.
+2. Delete old aggregated standard-instance tests replaced by focused per-family tests.
+3. Do not include obsolete shell scripts or generated `build`, `.gradle`, IDE, coverage or class files.
+4. Keep only wrapper configuration that belongs to the source distribution.
 
-**Done when:** repository root contains only build, source, documentation, CI, wrapper, and license files needed by the current project.
+## Task 14 — Verification
 
-## Task 13 — Final verification
-
-Run:
-
-```bash
-gradle clean check javadoc
-```
-
-Then verify:
-
-- no compiler warnings introduced by project sources;
-- all tests pass;
-- JaCoCo HTML/XML reports exist;
-- Javadoc is generated;
-- no stale package/source files remain;
-- README examples match actual APIs;
-- version is exactly `0.1.1`.
+1. Compile production sources with Java 21 and `-Xlint:all`.
+2. Compile and run all unit tests through Gradle when the wrapper is available.
+3. Generate Javadoc with doclint.
+4. Run all executable examples and compare output with README documentation.
+5. Verify no stale references to version 0.1.1 remain except historical documentation and changelog.
+6. Package the clean source tree as milestone 0.2.

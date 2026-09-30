@@ -1,16 +1,12 @@
 # Typeclasses in Java
 
-## 1. Motivation
+## Concept
 
-A typeclass describes behaviour for a type without requiring that type to inherit from a particular interface.
+A typeclass describes behaviour for a type without requiring that type to inherit from or implement the behaviour interface.
 
-In milestone 0.1.1 the pattern has three pieces:
+In this project a typeclass is represented by a small generic interface and an instance is an ordinary Java value implementing that interface.
 
-1. a generic behavioural contract;
-2. one or more instances of that contract for a concrete type;
-3. generic algorithms that receive an instance explicitly.
-
-## 2. Contract
+## Show
 
 ```java
 @FunctionalInterface
@@ -19,61 +15,69 @@ public interface Show<A> {
 }
 ```
 
-`Show<A>` says only that values of `A` can be represented as text. It says nothing about how `A` is implemented.
+`Person` does not implement `Show<Person>`. Instead, separate values provide compact and verbose representations.
 
-## 3. Instance
+## Eq
 
-```java
-Show<Integer> decimalShow = String::valueOf;
-```
-
-The instance is an ordinary Java value. It can be stored in a constant, passed as an argument, selected dynamically, or created locally.
-
-## 4. Dictionary passing
-
-A typeclass instance can be understood as a dictionary containing the operations required by a generic algorithm.
+`Eq<A>` represents selectable equality semantics:
 
 ```java
-static <A> String show(A value, Show<? super A> dictionary) {
-    return dictionary.show(value);
-}
+Eq<Person> byName =
+        (left, right) -> left.name().equalsIgnoreCase(right.name());
 ```
 
-The dependency is explicit and compile-time typed.
+This differs from `Object.equals`: multiple valid equality policies can coexist and callers choose one explicitly.
 
-## 5. Multiple instances
+## Ord
 
-Because behaviour is not attached to the model, several representations can coexist:
+`Ord<A>` refines `Eq<A>` with a comparison operation. Equality follows naturally when `compare(left, right) == 0`.
+
+A `Person` can therefore be ordered by age in one algorithm and by name in another without changing the record.
+
+## Semigroup
+
+A semigroup consists of a set of values and an associative `combine` operation.
+
+Examples include maximum over integers and string concatenation.
+
+Milestone 0.2 documents associativity but does not attempt to prove it with a few example-based unit tests. Systematic law verification belongs to 0.3.
+
+## Monoid
+
+A monoid is a semigroup with an identity element.
+
+Examples:
+
+| Type / operation | `combine` | identity |
+| --- | --- | --- |
+| Integer addition | `+` | `0` |
+| Integer multiplication | `*` | `1` |
+| String concatenation | concatenation | `""` |
+| List concatenation | concatenation | `[]` |
+
+## Explicit instance selection
 
 ```java
-Show<Person> compact = Person::name;
-Show<Person> verbose = person ->
-        "%s (%d)".formatted(person.name(), person.age());
+var sum = MonoidFunctions.combineAll(values, IntegerInstances.ADDITION);
+var product = MonoidFunctions.combineAll(values, IntegerInstances.MULTIPLICATION);
 ```
 
-The caller chooses the behaviour appropriate to its context.
+The generic algorithm does not need to know anything about addition or multiplication. Behaviour is selected by supplying the appropriate dictionary value.
 
-## 6. Existing types
+## Typeclasses versus inheritance
 
-Typeclasses can describe types that cannot be modified. The project defines an ISO rendering instance for `java.time.LocalDate` without subclassing or wrapping `LocalDate`.
+With inheritance, a domain type usually embeds one implementation of an interface. Typeclasses invert that relationship: external instances describe the type.
 
-## 7. Typeclass vs inheritance
+This is especially useful when:
 
-Inheritance is useful when a capability is an intrinsic part of a model's public contract. A typeclass-like approach is useful when behaviour should be:
+- the domain type cannot be modified, such as `LocalDate`;
+- several valid implementations exist for the same type;
+- domain data should remain independent of presentation or algorithm policy.
 
-- externally defined;
-- independently evolvable;
-- replaceable at the call site;
-- available in several variants for one type.
+## Typeclasses versus Strategy
 
-The approaches are complementary rather than universally interchangeable.
+The Java representation resembles the Strategy pattern because behaviour is passed as an object. The typeclass perspective adds a stronger focus on generic capability interfaces, reusable instances, algebraic laws and composition across types.
 
-## 8. Typeclass vs Strategy
+## Deliberately missing in 0.2
 
-In Java, the runtime mechanics are close to the Strategy pattern: behaviour is represented by an interface and passed to a consumer. The typeclass interpretation adds a type-oriented viewpoint: the interface represents an operation family parameterised by a target type, and generic algorithms are written in terms of that capability.
-
-## 9. Java limitations
-
-Java has no native syntax corresponding to Scala `given`/`using`, Haskell typeclass instance search, or higher-kinded types. Milestone 0.1.1 intentionally does not hide those limitations.
-
-Later milestones may explore explicit encodings for higher-kinded types and instance resolution, but only after the basic first-order model is stable.
+There is no global registry, implicit search, `summon`, reflection, annotations, automatic derivation, higher-kinded type encoding, `Functor`, `Applicative`, or `Monad` yet.
