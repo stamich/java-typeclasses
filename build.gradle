@@ -4,9 +4,9 @@ plugins {
 }
 
 group = 'io.codeswarm'
-version = '0.4.1'
+version = '0.5.0'
 
-description = 'Educational implementation of typeclass-oriented programming, algebraic data types, smart constructors, domain invariants, compositional instances, and executable algebraic laws in modern Java.'
+description = 'Educational implementation of typeclass-oriented programming, algebraic data types, higher-kinded type encoding, compositional instances, smart constructors, and executable algebraic laws in modern Java.'
 
 java {
     toolchain {

@@ -48,3 +48,17 @@ ADT results are also used to create domain values safely. See [SMART_CONSTRUCTOR
 ## Algebraic connection
 
 `NonEmptyList` has a lawful concatenation `Semigroup` but no lawful empty identity. An ordinary `List` can have a concatenation `Monoid` because `List.of()` is an identity element.
+
+## HKT participation from milestone 0.5
+
+The ADTs keep their ordinary Java APIs while also implementing the higher-kinded encoding:
+
+```text
+Option<A>       -> Kind<OptionK,A>
+Either<L,R>     -> Kind<EitherK<L>,R>
+Validated<E,A>  -> Kind<ValidatedK<E>,A>
+```
+
+This does not add runtime wrappers and does not alter `map`, `fold`, smart constructors or validation behavior. It only makes the type constructors addressable by generic abstractions that will be introduced in later milestones.
+
+`Either` and `Validated` demonstrate partial type application: their left/error parameter is fixed in the witness type so the remaining value parameter can occupy the `A` position of `Kind<F,A>`.

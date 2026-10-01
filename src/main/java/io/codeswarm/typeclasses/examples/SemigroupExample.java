@@ -15,8 +15,9 @@ public final class SemigroupExample {
     /**
      * Runs the semigroup example.
      *
+     * @param args command-line arguments; ignored
      */
-    static void main() {
+    public static void main(final String[] args) {
         final Semigroup<Integer> maximum = Integer::max;
         System.out.println(SemigroupFunctions.combineAll(List.of(4, 9, 2, 7), maximum));
     }

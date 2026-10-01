@@ -1,5 +1,7 @@
 package io.codeswarm.typeclasses.data;
 
+import io.codeswarm.typeclasses.hkt.Kind;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -16,7 +18,7 @@ import java.util.function.Function;
  * @param <E> validation error type
  * @param <A> successful value type
  */
-public sealed interface Validated<E, A> permits Valid, Invalid {
+public sealed interface Validated<E, A> extends Kind<ValidatedK<E>, A> permits Valid, Invalid {
 
     /**
      * Creates a successful validation result.

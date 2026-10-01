@@ -2,6 +2,42 @@
 
 All notable changes to this educational project are documented here.
 
+## 0.5.0
+
+### Added
+
+- minimal higher-kinded type encoding `Kind<F,A>`,
+- documented `hkt` package,
+- `OptionK`, `EitherK<L>` and `ValidatedK<E>` witness types,
+- `OptionKinds`, `EitherKinds` and `ValidatedKinds`,
+- centralized `widen` / `narrow` conversions,
+- HKT round-trip unit tests,
+- `HktExample`,
+- `docs/HKT.md`.
+
+### Changed
+
+- project version updated from `0.4.1` to `0.5.0`,
+- `Option<A>` now implements `Kind<OptionK,A>`,
+- `Either<L,R>` now implements `Kind<EitherK<L>,R>`,
+- `Validated<E,A>` now implements `Kind<ValidatedK<E>,A>`,
+- project description, README, ADT documentation, architecture and roadmap updated for the HKT layer.
+
+### Removed / intentionally omitted
+
+- no `Kind2` hierarchy is introduced because partial witness types are sufficient for the next milestones,
+- no `Functor`, `Applicative`, `Monad`, `Traverse`, effect type, Kleisli or Tagless Final implementation is added yet,
+- no reflection, annotation processing, registry or runtime witness objects are introduced,
+- no obsolete scripts or generated build outputs are retained.
+
+### Design notes
+
+- witness types contain no runtime state and exist only to identify type constructors,
+- binary ADTs use partial type application by fixing one parameter in the witness type,
+- widening is cast-free because the ADTs implement `Kind` directly,
+- unavoidable unchecked narrowing is isolated in exactly three helper methods,
+- the milestone intentionally establishes infrastructure rather than higher-order behavior, following SOLID, KISS, DRY and YAGNI.
+
 ## 0.4.1
 
 ### Added

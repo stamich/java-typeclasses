@@ -1,5 +1,7 @@
 package io.codeswarm.typeclasses.data;
 
+import io.codeswarm.typeclasses.hkt.Kind;
+
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -12,7 +14,7 @@ import java.util.function.Supplier;
  *
  * @param <A> contained value type
  */
-public sealed interface Option<A> permits Some, None {
+public sealed interface Option<A> extends Kind<OptionK, A> permits Some, None {
 
     /**
      * Creates an option containing a non-null value.

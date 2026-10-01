@@ -17,7 +17,7 @@ public final class LocalDateInstances {
 
     /** Renders dates in ISO-8601 local-date format. */
     public static final Show<LocalDate> ISO_SHOW =
-            DateTimeFormatter.ISO_LOCAL_DATE::format;
+            date -> DateTimeFormatter.ISO_LOCAL_DATE.format(date);
 
     /** Compares dates using standard value equality. */
     public static final Eq<LocalDate> EQ = LocalDate::equals;
