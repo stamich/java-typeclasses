@@ -1,5 +1,7 @@
 package io.codeswarm.typeclasses.data;
 
+import io.codeswarm.typeclasses.hkt.Kind;
+
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -15,7 +17,7 @@ import java.util.function.Supplier;
  * @param <L> left value type
  * @param <R> right value type
  */
-public sealed interface Either<L, R> permits Left, Right {
+public sealed interface Either<L, R> extends Kind<EitherK<L>, R> permits Left, Right {
 
     /**
      * Creates a left value.
