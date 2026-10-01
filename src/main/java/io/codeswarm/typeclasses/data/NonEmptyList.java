@@ -5,7 +5,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Immutable list that is guaranteed to contain at least one value.
@@ -97,7 +96,7 @@ public record NonEmptyList<A>(A head, List<A> tail) implements Iterable<A> {
         final List<B> mappedTail = tail.stream()
                 .map(mapper)
                 .map(value -> Objects.requireNonNull(value, "mapped tail element"))
-                .collect(Collectors.toUnmodifiableList());
+                .toList();
         return new NonEmptyList<>(mappedHead, mappedTail);
     }
 
