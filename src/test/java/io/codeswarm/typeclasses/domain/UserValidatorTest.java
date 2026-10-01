@@ -24,6 +24,11 @@ class UserValidatorTest {
     void shouldAccumulateAllErrors() {
         final var result = UserValidator.validate("", "", -1);
         assertTrue(result.isInvalid());
-        assertEquals(3, Optional.ofNullable(result.fold(NonEmptyList::size, ignored -> 0)).get());
+        final int errorCount =
+                result.fold(
+                        NonEmptyList::size,
+                        ignored -> 0);
+
+        assertEquals(3, errorCount);
     }
 }
