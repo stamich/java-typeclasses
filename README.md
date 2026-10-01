@@ -2,7 +2,7 @@
 
 An educational implementation of typeclass-oriented functional programming in modern Java.
 
-Milestone **0.4.1** hardens the ADT layer introduced in 0.4.0 with non-empty collections, smart constructors, typed validation errors and domain invariants.
+Milestone **0.5.0** introduces a minimal higher-kinded type (HKT) encoding on top of the ADT and algebra layers completed in 0.4.1.
 
 ## Goals
 
@@ -15,12 +15,13 @@ The project currently covers:
 - executable algebraic laws and jqwik property tests,
 - sealed ADTs: `Option`, `Either` and `Validated`,
 - compositional `Eq` and `Show` instances,
-- `NonEmptyList<A>`,
-- smart constructors and invariant-safe domain values,
-- typed validation errors,
-- domain-level error accumulation with `Validated`.
+- `NonEmptyList<A>` and lawful concatenation `Semigroup`,
+- smart constructors, typed validation errors and domain invariants,
+- a minimal HKT encoding through `Kind<F,A>`,
+- witness types and partial type application,
+- centralized widen/narrow helpers.
 
-The project deliberately does **not** yet introduce HKT encoding, `Functor`, `Applicative`, `Monad`, `Traverse`, effects, Kleisli, Tagless Final, Free Monad or optics.
+The project deliberately does **not** yet introduce `Functor`, `Applicative`, `Monad`, `Traverse`, effect types, Kleisli, Tagless Final, Free Monad or optics.
 
 ## Requirements
 
@@ -47,28 +48,27 @@ src/main/java/io/codeswarm/typeclasses/
 │   ├── Eq.java
 │   ├── Ord.java
 │   └── Show.java
+├── hkt/
+│   ├── Kind.java
+│   └── package-info.java
 ├── data/
 │   ├── Option.java
+│   ├── OptionK.java
+│   ├── OptionKinds.java
 │   ├── Some.java
 │   ├── None.java
 │   ├── Either.java
+│   ├── EitherK.java
+│   ├── EitherKinds.java
 │   ├── Left.java
 │   ├── Right.java
 │   ├── Validated.java
+│   ├── ValidatedK.java
+│   ├── ValidatedKinds.java
 │   ├── Valid.java
 │   ├── Invalid.java
 │   └── NonEmptyList.java
 ├── domain/
-│   ├── ValidationError.java
-│   ├── BlankUserId.java
-│   ├── BlankPersonName.java
-│   ├── PersonNameTooLong.java
-│   ├── InvalidAge.java
-│   ├── UserId.java
-│   ├── PersonName.java
-│   ├── Age.java
-│   ├── User.java
-│   └── UserValidator.java
 ├── examples/
 ├── instances/
 └── syntax/
@@ -76,107 +76,91 @@ src/main/java/io/codeswarm/typeclasses/
 
 Reusable law helpers remain in `src/test/java/io/codeswarm/typeclasses/laws/`.
 
-## NonEmptyList
+## Higher-kinded type encoding
 
-`NonEmptyList<A>` encodes non-emptiness structurally:
-
-```java
-NonEmptyList<Integer> values = NonEmptyList.of(1, 2, 3);
-```
-
-There is no public way to create an empty value. This lets `Invalid<E,A>` represent failed validation without a separate runtime `isEmpty()` guard.
+Java can abstract over values of type `A`, but cannot directly abstract over a type constructor like Scala's `F[_]`. Milestone 0.5 introduces:
 
 ```java
-public record Invalid<E, A>(NonEmptyList<E> errors)
-        implements Validated<E, A> {
+public interface Kind<F, A> {
 }
 ```
 
-`NonEmptyList<A>` has a natural concatenation `Semigroup` but intentionally no `Monoid`:
+The `F` parameter is a witness identifying the constructor.
+
+### Option
+
+`Option<A>` now implements:
 
 ```text
-List<A>          -> Monoid<List<A>>
-NonEmptyList<A>  -> Semigroup<NonEmptyList<A>>
+Kind<OptionK, A>
 ```
 
-A monoid requires an identity element; an empty `NonEmptyList` cannot exist.
-
-## Smart constructors
-
-Domain values expose factories that validate raw input and return an ADT instead of throwing for expected validation failures.
+Example:
 
 ```java
-Either<ValidationError, UserId> id = UserId.from(" user-42 ");
-Either<ValidationError, Age> age = Age.from(42);
+Option<Integer> option = Option.some(42);
+Kind<OptionK, Integer> widened = OptionKinds.widen(option);
+Option<Integer> restored = OptionKinds.narrow(widened);
 ```
 
-Invalid input is explicit:
+### Either and partial type application
 
-```java
-Age.from(-1);       // Left(InvalidAge[-1])
-UserId.from(" ");   // Left(BlankUserId[])
-```
-
-The constructors of `UserId`, `PersonName` and `Age` are private, so invalid states cannot be created through their public APIs.
-
-See [docs/SMART_CONSTRUCTORS.md](docs/SMART_CONSTRUCTORS.md).
-
-## Typed validation errors
-
-Expected validation failures are modeled as a closed ADT:
+`Either<L,R>` has two type parameters, but a future `Functor<F>` needs a unary constructor. The left type is therefore fixed in a witness:
 
 ```text
-ValidationError
-├── BlankUserId
-├── BlankPersonName
-├── PersonNameTooLong
-└── InvalidAge
+Either<String, Integer>
+≈ Kind<EitherK<String>, Integer>
 ```
 
-This is preferable to using arbitrary strings when callers need to inspect or pattern-match on error categories.
+Likewise:
 
-## Validated and error accumulation
-
-`UserValidator` demonstrates accumulation of independent errors:
-
-```java
-Validated<ValidationError, User> result =
-        UserValidator.validate("", "", -10);
+```text
+Validated<String, Integer>
+≈ Kind<ValidatedK<String>, Integer>
 ```
 
-The result contains three typed errors in a `NonEmptyList`.
+This models partial type application without adding wrapper objects around the ADTs.
 
-This implementation is intentionally domain-specific. Generic validation composition is deferred until the project has `Applicative`.
+## Widening and narrowing
 
-## ADT helper factories
+`widen` requires no cast because each ADT directly implements the relevant `Kind` application.
 
-Milestone 0.4.1 adds small Java-interoperability helpers:
+`narrow` needs a controlled unchecked cast because Java type erasure cannot prove the witness-to-ADT relationship at runtime. Those casts are intentionally isolated in exactly three helpers:
 
-```java
-Option.when(condition, supplier);
-Either.cond(condition, rightSupplier, leftSupplier);
-Either.fromNullable(value, leftSupplier);
-Either.fromOptional(optional, leftSupplier);
-```
+- `OptionKinds.narrow`,
+- `EitherKinds.narrow`,
+- `ValidatedKinds.narrow`.
 
-No `flatMap` is added yet; monadic operations will be introduced together with the generic `Monad` milestone.
+The rest of the codebase should not perform HKT-related unchecked casts.
+
+See [docs/HKT.md](docs/HKT.md).
+
+## Existing ADT and domain layer
+
+Milestone 0.5 preserves the 0.4.1 APIs:
+
+- `NonEmptyList<A>` models non-empty collections structurally,
+- `Invalid<E,A>` stores `NonEmptyList<E>`,
+- `UserId`, `PersonName` and `Age` use smart constructors,
+- `ValidationError` is a sealed typed error hierarchy,
+- `UserValidator` demonstrates domain-level error accumulation with `Validated`.
+
+No monadic API is added to those types yet.
 
 ## Design principles
 
-- **SRP** — ADTs, domain validation, typeclasses, instances, syntax and laws remain separate.
-- **OCP** — new instances and domain validators do not require modifying typeclasses.
-- **DIP** — generic functions continue to depend on typeclass abstractions.
-- **KISS** — smart constructors use ordinary Java and explicit ADTs.
-- **DRY** — law helpers and compositional instances are reused rather than duplicated.
-- **YAGNI** — no HKT, generic Applicative validation or effect system is introduced early.
+- **SRP** — HKT mechanics live in `hkt` and `*Kinds` helpers rather than inside unrelated typeclasses.
+- **OCP** — new type constructors can participate by introducing their own witness and `Kind` implementation.
+- **DIP** — future higher-order typeclasses can depend on `Kind<F,A>` instead of concrete ADTs.
+- **KISS** — only one marker abstraction is introduced; there is no `Kind2`, registry or reflection layer.
+- **DRY** — unavoidable casts are centralized instead of repeated across future typeclass instances.
+- **YAGNI** — `Functor`, `Applicative` and `Monad` remain outside this milestone.
 
 ## Examples
 
-`AdtExample` demonstrates `Option`, `Either`, `Validated` and composed `Show` instances.
+`HktExample` demonstrates round-trip widening and narrowing for `Option`, `Either` and `Validated`.
 
-`SmartConstructorExample` demonstrates validated domain values.
-
-`ValidatedUserExample` demonstrates accumulated typed validation errors.
+Existing examples continue to demonstrate algebra, ADTs, smart constructors and validation.
 
 ## Documentation
 
@@ -186,6 +170,7 @@ No `flatMap` is added yet; monadic operations will be introduced together with t
 - [Algebraic laws](docs/LAWS.md)
 - [Algebraic data types](docs/ADT.md)
 - [Smart constructors](docs/SMART_CONSTRUCTORS.md)
+- [Higher-kinded type encoding](docs/HKT.md)
 - [Implementation tasks](docs/IMPLEMENTATION_TASKS.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Changelog](CHANGELOG.md)
@@ -193,7 +178,6 @@ No `flatMap` is added yet; monadic operations will be introduced together with t
 ## Roadmap
 
 ```text
-0.5   HKT encoding: Kind<F,A>
 0.6   Functor / Applicative / Monad / MonadError
 0.7   Foldable / Traverse / Bifunctor
 0.8   Id / Eval / IO / FunctionK
