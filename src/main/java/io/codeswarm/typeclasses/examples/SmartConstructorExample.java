@@ -12,7 +12,7 @@ public final class SmartConstructorExample {
     }
 
     /** Runs the smart-constructor example. */
-    static void main() {
+    public static void main(final String[] args) {
         System.out.println(UserId.from("user-42"));
         System.out.println(UserId.from("   "));
         System.out.println(PersonName.from("Alice"));
